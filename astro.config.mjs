@@ -1,12 +1,8 @@
-// @ts-check
-import { defineConfig } from 'astro/config';
-
-// https://astro.build/config
-export default defineConfig({});
-
+// astro.config.mjs
 import { defineConfig } from 'astro/config';
 
 export default defineConfig({
-  site: 'https://Dmitrii-Victorovich.github.io',
-  base: '/juggernautcr-site',
+  site: 'https://juggernautcr.ru',
+  // output: 'static', // (по умолчанию у Astro 5 уже static, можно не указывать)
+  // base: '/',         // не обязателен при корне домена
 });
