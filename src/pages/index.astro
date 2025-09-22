@@ -1,11 +1,28 @@
 ---
-import Welcome from '../components/Welcome.astro';
-import Layout from '../layouts/Layout.astro';
-
-// Welcome to Astro! Wondering what to do next? Check out the Astro documentation at https://docs.astro.build
-// Don't want to use any of this? Delete everything in this file, the `assets`, `components`, and `layouts` directories, and start fresh.
+// главная
 ---
-
-<Layout>
-	<Welcome />
-</Layout>
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>Juggernaut CR</title>
+    <style>
+      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+      header{padding:64px 24px;text-align:center}
+      h1{font-size:clamp(32px,6vw,56px);margin:0 0 12px}
+      nav{display:flex;gap:12px;justify-content:center;margin-top:20px}
+      a.btn{padding:10px 16px;border:1px solid currentColor;border-radius:12px;text-decoration:none}
+      footer{text-align:center;opacity:.6;padding:40px 0 24px}
+    </style>
+  </head>
+  <body>
+    <header>
+      <h1>Juggernaut CR</h1>
+      <p>Лёгкий старт на Astro + GitHub Pages</p>
+      <nav>
+        <a class="btn" href="/about">О проекте</a>
+        <a class="btn" href="/gallery">Галерея</a>
+      </nav>
+    </header>
+    <footer>© {new Date().getFullYear()} Juggernaut CR</footer>
+  </body>
+</html>
