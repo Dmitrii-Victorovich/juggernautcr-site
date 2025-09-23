@@ -1,126 +1,45 @@
+---
+const year = new Date().getFullYear();
+---
+<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
     <title>Juggernaut CR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
-      header{padding:64px 24px;text-align:center}
-      h1{font-size:clamp(32px,6vw,56px);margin:0 0 12px}
-      nav{display:flex;gap:12px;justify-content:center;margin-top:20px}
-      a.btn{padding:10px 16px;border:1px solid currentColor;border-radius:12px;text-decoration:none}
-      footer{text-align:center;opacity:.6;padding:40px 0 24px}
-      .hero{max-width:min(100%,980px);height:auto;display:block;margin:16px auto;border-radius:16px}
-  .contacts{
-    display:flex; gap:16px; justify-content:center; align-items:stretch;
-    margin: 56px auto 24px; max-width: 960px; flex-wrap: wrap;
-  }
-  .card{
-    display:flex; gap:16px; align-items:center;
-    padding:16px 18px; border:1px solid #e6e6ec; border-radius:14px; background:#fff;
-    text-decoration:none; color:inherit; box-shadow:0 2px 10px rgba(0,0,0,.03);
-    min-width: 320px; /* чтобы не сжимались слишком сильно */
-  }
-  .card img{ width:56px; height:56px; border-radius:50%; object-fit:cover; }
-  .card h3{ margin:0 0 4px; font-size:18px; }
-  .muted{ margin:0 0 8px; opacity:.7 }
-  .links{ display:flex; flex-wrap:wrap; gap:8px; }
-
-  .btn.small{
-    padding:6px 10px; font-size:14px; border-radius:10px;
-    border:1px solid currentColor; text-decoration:none;
-  }
-  .chip{
-    display:inline-block; padding:6px 10px; font-size:14px;
-    border:1px solid #e6e6ec; border-radius:999px; text-decoration:none; color:inherit;
-  }
-
-  @media (max-width:640px){
-    .contacts{ flex-direction:column; align-items:center; }
-    .card{ width:100%; max-width: 520px; }
-  }
+      :root { --fg:#0b0b0c; --muted:#666; --ring:#9aa4ff; }
+      * { box-sizing: border-box }
+      body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif; color:var(--fg) }
+      header{ padding:64px 24px; text-align:center }
+      h1{ font-size:clamp(32px,6vw,56px); margin:0 0 12px }
+      p.lead{ margin:0 auto; max-width:820px; opacity:.9 }
+      nav.cta{ display:flex; gap:12px; justify-content:center; margin:20px 0 0 }
+      a.btn{ padding:10px 16px; border:1px solid currentColor; border-radius:12px;
+             text-decoration:none; transition:.15s transform, .15s box-shadow }
+      a.btn:focus-visible{ outline:none; box-shadow:0 0 0 4px var(--ring); transform:translateY(-1px)}
+      footer{ padding:28px 24px 40px; display:flex; gap:12px; justify-content:center }
+      @media (max-width:520px){ footer{ flex-direction:column; align-items:center } }
     </style>
-
-.cta-bottom{
-  display:flex; justify-content:center; gap:12px;
-  margin: 12px 0 40px;
-}
-@media (max-width:640px){
-  .cta-bottom{ flex-direction:column; align-items:center; }
-  .cta-bottom .btn{ width: 280px; text-align:center; }
-}
-
   </head>
   <body>
     <header>
       <h1>Juggernaut CR</h1>
-      <p>Мишаня, Максон, Арсенджан я ваши рты любил,кидайте идеи мне, никому не пиздите о моём грандиозном проекте</p>
-      <nav>
+      <p class="lead">
+        Добро пожаловать!
+      </p>
+
+      <nav class="cta">
         <a class="btn" href="/about">О проекте</a>
+        <a class="btn" href="/gallery">Галерея</a>
       </nav>
     </header>
-    <section class="contacts" aria-label="Контакты">
-  <!-- Администрация -->
-  <div class="card">
-    <img src="/images/admin.jpg" alt="Администрация — Имя Фамилия">
-    <div>
-      <p class="muted">Irina</p>
-      <div class="links">
-        <a class="btn small" href="https://t.me/Jugger66" target="_blank" rel="noopener">
-          Написать в Telegram
-        </a>
-      </div>
-    </div>
-  </div>
 
-  <!-- Создатель -->
-  <div class="card">
-    <img src="/images/creator.jpg" alt="Создатель — Твоё имя">
-    <div>
-      <h3>Создатель</h3>
-      <p class="muted">
-        Короткая биография
-      </p>
-      <div class="links">
-        <!-- commercial -->
-        <a class="chip" href="http://juggernautcr1@gmail.com">juggernautcr1@gmail.com</a>
-        <a class="chip" href="http://juggernautcr.@mail.ru">juggernautcr@mail.ru</a>
-        </a>
-      </div>
-    </div>
-  </div>
-</section>
+    <footer>
+      <a class="btn" href="/admin">Администрация</a>
+      <a class="btn" href="/creator">Создатель</a>
+    </footer>
 
-<section class="cta-bottom">
-  <a class="btn" href="/admin">Администрация</a>
-  <a class="btn" href="/creator">Создатель</a>
-</section>
-
-
-    <footer>© {new Date().getFullYear()} Juggernaut CR</footer>
-  <script type="application/ld+json">
-{
-  "@context": "https://schema.org",
-  "@graph": [
-    {
-      "@type": "Person",
-      "name": "Имя Фамилия",
-      "jobTitle": "Администрация",
-      "sameAs": ["https://t.me/ADMIN_USERNAME"]
-    },
-    {
-      "@type": "Person",
-      "name": "Твоё имя",
-      "jobTitle": "Создатель",
-      "sameAs": ["https://t.me/YOUR_USERNAME"],
-      "email": "biz@juggernautcr.ru"
-    }
-  ]
-}
-</script>
-
-  </body>
-</html>
-</p>
+    <div style="text-align:center; color:var(--muted); padding-bottom:24px">© {year} Juggernaut CR</div>
   </body>
 </html>
