@@ -1,43 +1,51 @@
+<!doctype html>
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
     <title>Администрация — Juggernaut CR</title>
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width,initial-scale=1" />
     <style>
-      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
-      .wrap{max-width:900px;margin:0 auto;padding:24px}
-      .back{display:inline-block;margin:4px 0 16px;text-decoration:none;opacity:.7}
-      h1{font-size:clamp(28px,5vw,40px);margin:0 0 16px}
-      .card{display:flex;gap:16px;align-items:center;border:1px solid #e6e6ec;border-radius:14px;padding:16px 18px;box-shadow:0 2px 10px rgba(0,0,0,.03)}
-      .avatar{width:72px;height:72px;border-radius:50%;object-fit:cover}
-      .muted{opacity:.75;margin:.25rem 0 .75rem}
-      .row{display:flex;gap:10px;flex-wrap:wrap}
-      .btn{padding:10px 16px;border:1px solid currentColor;border-radius:12px;text-decoration:none}
-      .btn.small{padding:6px 10px;font-size:14px;border-radius:10px}
-      .ico{width:16px;height:16px;margin-right:6px;vertical-align:-2px}
+      body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif }
+      main{ max-width:920px; margin:40px auto; padding:0 20px }
+      h1{ margin:0 0 24px }
+      .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px}
+      .card{ border:1px solid #ddd; border-radius:16px; padding:16px; text-align:center }
+      .avatar{ inline-size:96px; block-size:96px; border-radius:50%; object-fit:cover; margin:0 auto 12px }
+      .name{ font-weight:600; margin:4px 0 10px }
+      .icons{ display:flex; gap:10px; justify-content:center }
+      .icon{ inline-size:22px; block-size:22px; display:inline-flex; align-items:center; justify-content:center; color:#444 }
+      .icon:hover{ color:#111 }
+      .back{ display:inline-block; margin-top:24px }
+      a{ color:inherit; text-decoration:none }
     </style>
   </head>
   <body>
-    <main class="wrap">
-      <a class="back" href="/">← На главную</a>
+    <main>
       <h1>Администрация</h1>
 
-      <section class="card">
-        <img class="avatar" src={admin.photo} alt={`Администратор — ${admin.name}`} />
-        <div>
-          <h2 style="margin:.1rem 0 .25rem;font-size:20px">{admin.name}</h2>
-          <p class="muted">Связаться для организационных вопросов</p>
-          <div class="row">
-            <a class="btn small" href={admin.tg} target="_blank" rel="noopener">
-              <!-- Telegram icon -->
-              <svg class="ico" viewBox="0 0 24 24" fill="currentColor" aria-hidden="true">
-                <path d="M21.8 4.1c.3-.98-.6-1.86-1.55-1.5L2.64 9.2c-1.4.55-1.3 2.55.15 2.98l4.9 1.45 1.9 5.95c.25.78 1.22.98 1.78.36l2.9-3.08 5.3 3.85c.86.63 2.07.17 2.3-.88L21.8 4.1Zm-4.6 2.7-8.7 7 1 3.2 1.2-2.6 6.5-7.6Z"/>
+      <div class="grid">
+        <!-- Карточка администратора (пример). Поменяй данные/ссылки под себя -->
+        <div class="card">
+          <img class="avatar" src="/images/admin1.jpg" alt="Имя администратора" />
+          <div class="name">Имя Фамилия</div>
+          <div class="icons">
+            <!-- Telegram -->
+            <a class="icon" href="https://t.me/username" aria-label="Telegram" target="_blank" rel="noreferrer">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                <path d="M9.03 14.67 8.86 18c.29 0 .41-.12.56-.27l1.34-1.29 2.78 2.04c.51.28.88.13 1.02-.47l1.84-8.66c.19-.86-.33-1.2-.86-.99L5.1 11.02c-.83.33-.81.81-.14 1.03l3.34 1.04 7.77-4.91-7.04 6.49z"/>
               </svg>
-              Telegram
+            </a>
+            <!-- Email -->
+            <a class="icon" href="mailto:admin@example.com" aria-label="Email">
+              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
+                <path d="M20 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5L4 8V6l8 5 8-5v2Z"/>
+              </svg>
             </a>
           </div>
         </div>
-      </section>
+      </div>
+
+      <a class="back" href="/">← На главную</a>
     </main>
   </body>
 </html>
