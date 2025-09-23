@@ -40,6 +40,16 @@
     .card{ width:100%; max-width: 520px; }
   }
     </style>
+
+.cta-bottom{
+  display:flex; justify-content:center; gap:12px;
+  margin: 12px 0 40px;
+}
+@media (max-width:640px){
+  .cta-bottom{ flex-direction:column; align-items:center; }
+  .cta-bottom .btn{ width: 280px; text-align:center; }
+}
+
   </head>
   <body>
     <header>
@@ -54,9 +64,6 @@
   <div class="card">
     <img src="/images/admin.jpg" alt="Администрация — Имя Фамилия">
     <div>
-      <nav>
-        <a class="btn" href="/about"> Администрация </a>
-      </nav>
       <p class="muted">Irina</p>
       <div class="links">
         <a class="btn small" href="https://t.me/Jugger66" target="_blank" rel="noopener">
@@ -83,6 +90,12 @@
     </div>
   </div>
 </section>
+
+<section class="cta-bottom">
+  <a class="btn" href="/admin">Администрация</a>
+  <a class="btn" href="/creator">Создатель</a>
+</section>
+
 
     <footer>© {new Date().getFullYear()} Juggernaut CR</footer>
   <script type="application/ld+json">
