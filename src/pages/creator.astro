@@ -22,7 +22,18 @@
     <h1>Создатель</h1>
 
     <section class="wrap">
-      <img class="avatar" src="/images/creator.jpg" alt="Создатель" />
+      <video class="avatar"
+       autoplay
+       muted
+       loop
+       playsinline
+       preload="metadata"
+       poster="/images/creator-poster.jpg">
+  <source src="creator.webm" type="video/webm" />
+  <!-- желательно иметь запасной mp4 на случай старого Safari -->
+  <source src="/videos/creator.mp4" type="video/mp4" />
+  Ваш браузер не поддерживает видео.
+</video>
       <div class="bio">
         <p>Короткая биография - длинный пенис <p>
         <div class="icons" aria-label="Контакты">
