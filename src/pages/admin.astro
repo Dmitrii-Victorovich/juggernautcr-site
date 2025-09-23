@@ -1,51 +1,47 @@
 <!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <title>Администрация — Juggernaut CR</title>
-    <meta name="viewport" content="width=device-width,initial-scale=1" />
-    <style>
-      body{ margin:0; font-family: system-ui, -apple-system, Segoe UI, Roboto, sans-serif }
-      main{ max-width:920px; margin:40px auto; padding:0 20px }
-      h1{ margin:0 0 24px }
-      .grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(220px,1fr)); gap:16px}
-      .card{ border:1px solid #ddd; border-radius:16px; padding:16px; text-align:center }
-      .avatar{ inline-size:96px; block-size:96px; border-radius:50%; object-fit:cover; margin:0 auto 12px }
-      .name{ font-weight:600; margin:4px 0 10px }
-      .icons{ display:flex; gap:10px; justify-content:center }
-      .icon{ inline-size:22px; block-size:22px; display:inline-flex; align-items:center; justify-content:center; color:#444 }
-      .icon:hover{ color:#111 }
-      .back{ display:inline-block; margin-top:24px }
-      a{ color:inherit; text-decoration:none }
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>Администрация</h1>
+<head>
+  <meta charset="utf-8" />
+  <title>Администрация — Juggernaut CR</title>
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <style>
+    :root { --gap:16px; --br:16px; --fg:#111; --muted:#555; }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:var(--fg)}
+    main{max-width:980px;margin:40px auto;padding:0 20px}
+    h1{margin:0 0 20px}
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--gap)}
+    .card{border:1px solid #ddd;border-radius:var(--br);padding:18px;text-align:center}
+    .avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:8px auto 12px;display:block}
+    .name{font-weight:600;margin-bottom:10px}
+    .icons{display:flex;justify-content:center;gap:10px}
+    .icon{inline-size:24px;block-size:24px;color:#444}
+    .back{display:inline-block;margin-top:20px;color:inherit;text-decoration:none;border:1px solid currentColor;padding:10px 16px;border-radius:12px}
+  </style>
+</head>
+<body>
+  <main>
+    <h1>Администрация</h1>
 
-      <div class="grid">
-        <!-- Карточка администратора (пример). Поменяй данные/ссылки под себя -->
-        <div class="card">
-          <img class="avatar" src="/images/admin1.jpg" alt="Имя администратора" />
-          <div class="name">Имя Фамилия</div>
-          <div class="icons">
-            <!-- Telegram -->
-            <a class="icon" href="https://t.me/username" aria-label="Telegram" target="_blank" rel="noreferrer">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-                <path d="M9.03 14.67 8.86 18c.29 0 .41-.12.56-.27l1.34-1.29 2.78 2.04c.51.28.88.13 1.02-.47l1.84-8.66c.19-.86-.33-1.2-.86-.99L5.1 11.02c-.83.33-.81.81-.14 1.03l3.34 1.04 7.77-4.91-7.04 6.49z"/>
-              </svg>
-            </a>
-            <!-- Email -->
-            <a class="icon" href="mailto:admin@example.com" aria-label="Email">
-              <svg viewBox="0 0 24 24" width="22" height="22" fill="currentColor" aria-hidden="true">
-                <path d="M20 4H4a2 2 0 0 0-2 2v12c0 1.1.9 2 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5L4 8V6l8 5 8-5v2Z"/>
-              </svg>
-            </a>
-          </div>
+    <div class="grid">
+      <!-- Пример карточки администратора. Замени данными и аватаром -->
+      <article class="card">
+        <img class="avatar" src="/images/admin1.jpg" alt="Администратор" />
+        <div class="name">Имя Админа</div>
+        <div class="icons">
+          <!-- Telegram -->
+          <a href="https://t.me/username" target="_blank" rel="noreferrer" aria-label="Telegram" class="icon" title="Telegram">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14" /></svg>
+          </a>
+          <!-- Email -->
+          <a href="mailto:admin@example.com" class="icon" aria-label="Email" title="Email">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M20 4H4a2 2 0 0 0-2 2v12a2 2 0 0 0 2 2h16a2 2 0 0 0 2-2V6a2 2 0 0 0-2-2Zm0 4-8 5L4 8V6l8 5 8-5v2Z"/></svg>
+          </a>
         </div>
-      </div>
+      </article>
+    </div>
 
-      <a class="back" href="/">← На главную</a>
-    </main>
-  </body>
+    <a class="back" href="/">На главную</a>
+  </main>
+</body>
 </html>
