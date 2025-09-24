@@ -5,7 +5,7 @@
   <meta name="viewport" content="width=device-width,initial-scale=1" />
   <title>Juggernaut</title>
   <style>
-    /* базовая тема как у страницы кланов */
+    /* базовая тема */
     :root{
       --bg:#0f1320;
       --fg:#e9eef7;
@@ -36,7 +36,6 @@
     h1{font-size:48px;line-height:1.05;margin:0 0 8px}
     .sub{color:var(--muted);margin:0 0 22px}
 
-    /* «пилюльки» как на странице кланов */
     .actions{display:flex;flex-wrap:wrap;gap:12px;justify-content:center}
     .pill{
       display:inline-flex;align-items:center;justify-content:center;
@@ -51,8 +50,8 @@
     .pill:hover{transform:translateY(-1px);background:rgba(255,255,255,.12)}
     .pill:active{transform:translateY(0)}
     .muted{opacity:.85}
+     footer{margin-top:22px;color:var(--muted);font-size:13px;text-align:center}
 
-    footer{margin-top:22px;color:var(--muted);font-size:13px;text-align:center}
   </style>
 </head>
 <body>
@@ -63,9 +62,8 @@
 
       <div class="actions">
         <a class="pill" href="/about">О нас</a>
-        <a class="pill" href="/admins">Администрация</a>
-        <a class="pill" href="/creators">Создатели</a>
-        <a class="pill muted" href="/clans">Наши кланы</a>
+        <a class="pill" href="/admin">Администрация</a>
+        <a class="pill" href="/creator">Создатель</a>
       </div>
 
       <footer>© 2025 Juggernaut CR</footer>
