@@ -5,18 +5,42 @@
   <title>Администрация — Juggernaut CR</title>
   <meta name="viewport" content="width=device-width, initial-scale=1" />
   <style>
-    :root { --gap:16px; --br:16px; --fg:#111; --muted:#555; }
+    :root { --gap:16px; --br:16px; --fg:#111; }
     *{box-sizing:border-box}
     body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif;color:var(--fg)}
     main{max-width:980px;margin:40px auto;padding:0 20px}
     h1{margin:0 0 20px}
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:var(--gap)}
-    .card{border:1px solid #ddd;border-radius:var(--br);padding:18px;text-align:center}
-    .avatar{width:96px;height:96px;border-radius:50%;object-fit:cover;margin:8px auto 12px;display:block}
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+      gap:var(--gap);
+    }
+    .card{
+      border:1px solid #ddd;
+      border-radius:var(--br);
+      padding:18px;
+      text-align:center;
+    }
+    .avatar{
+      width:96px;height:96px;
+      border-radius:50%;
+      object-fit:cover;
+      margin:8px auto 12px;
+      display:block;
+      background:#f5f5f5; /* фон-заглушка */
+    }
     .name{font-weight:600;margin-bottom:10px}
     .icons{display:flex;justify-content:center;gap:10px}
     .icon{inline-size:24px;block-size:24px;color:#444}
-    .back{display:inline-block;margin-top:20px;color:inherit;text-decoration:none;border:1px solid currentColor;padding:10px 16px;border-radius:12px}
+    .back{
+      display:inline-block;
+      margin-top:20px;
+      color:inherit;
+      text-decoration:none;
+      border:1px solid currentColor;
+      padding:10px 16px;
+      border-radius:12px
+    }
   </style>
 </head>
 <body>
@@ -24,37 +48,42 @@
     <h1>Администрация по набору в кланы</h1>
 
     <div class="grid">
+      <!-- Ирина -->
       <article class="card">
-        <img class="avatar" src="/public/images/admin.png" alt="Администратор" />
-        <div class="name"> Ирина </div>
+        <img class="avatar" src="/public/images/admin.png" alt="Ирина" />
+        <div class="name">Ирина</div>
         <div class="icons">
-          <a href="https://t.me/Jugger66" target="_blank" rel="noreferrer" aria-label="Telegram" class="icon" title="Telegram">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14" /></svg>
+          <a href="https://t.me/Jugger66" target="_blank" class="icon" aria-label="Telegram">
+            <!-- иконка -->
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Максим -->
+      <article class="card">
+        <img class="avatar" src="" alt="Максим (фото позже)" />
+        <div class="name">Максим</div>
+        <div class="icons">
+          <a href="https://t.me/MaKsOnB" target="_blank" class="icon" aria-label="Telegram">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14"/></svg>
+          </a>
+        </div>
+      </article>
+
+      <!-- Игорь -->
+      <article class="card">
+        <img class="avatar" src="" alt="Игорь (фото позже)" />
+        <div class="name">Игорь</div>
+        <div class="icons">
+          <a href="https://t.me/IG_STR" target="_blank" class="icon" aria-label="Telegram">
+            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14"/></svg>
           </a>
         </div>
       </article>
     </div>
 
-<div class="name"> Максим </div>
-<div class="icons">
-          <a href="https://t.me/MaKsOnB" target="_blank" rel="noreferrer" aria-label="Telegram" class="icon" title="Telegram">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14" /></svg>
-          </a>
-        </div>
-      </article>
-    </div>
-
-
-<div class="name"> Игорь </div>
-<div class="icons">
-          <a href="https://t.me/IG_STR" target="_blank" rel="noreferrer" aria-label="Telegram" class="icon" title="Telegram">
-            <svg viewBox="0 0 24 24" width="24" height="24" fill="currentColor" aria-hidden="true"><path d="M9.04 15.16 8.9 18.3c.33 0 .48-.14.65-.31l1.57-1.51 3.26 2.39c.6.33 1.03.16 1.2-.55l2.18-10.25c.19-.88-.33-1.22-.9-1l-12.8 4.94c-.87.34-.86.83-.15 1.05l3.28 1.02 7.61-4.8c.36-.22.7-.1.43.14" /></svg>
-          </a>
-        </div>
-      </article>
-    </div>
-
-<p style="margin-top:20px;opacity:.8;">Занимается набором в клан у кого королевская башня 14 уровня и ниже</p>
+    <p style="margin-top:20px;opacity:.8;">Занимается набором в клан у кого королевская башня 14 уровня и ниже</p>
 
     <a class="back" href="/">На главную</a>
   </main>
