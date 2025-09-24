@@ -1,97 +1,111 @@
----
-const clans = [
-  { name: '"Juggernaut"',  tag: '#8CUQYQGY' },
-  { name: 'FrostLegion', tag: '#2YUJJJQY' },
-  { name: 'MARKO',       tag: '#2LC2Y208' },
-];
-
-// формируем deeplink: link.clashroyale.com откроет игру на мобильном сразу на странице клана
-const rows = clans.map(c => ({
-  ...c,
-  id: c.tag.replace('#', ''),
-  link: `https://link.clashroyale.com/?clanInfo?id=${c.tag.replace('#', '')}`,
-}));
----
-
+<!doctype html>
 <html lang="ru">
-  <head>
-    <meta charset="utf-8" />
-    <title>О нас — Juggernaut</title>
-    <style>
-      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
-      main{max-width:880px;margin:48px auto;padding:0 20px}
-      h1{font-size:clamp(28px,5vw,40px);margin:0 0 16px}
-      p{line-height:1.6}
-      .clans{list-style:none;padding:0;margin:20px 0 28px;display:grid;gap:12px}
-      .clan-row{
-        display:flex;gap:12px;align-items:center;flex-wrap:wrap;
-        border:1px solid #ddd;border-radius:12px;padding:12px 14px;
-      }
-      .name{font-weight:700}
-      .tag{opacity:.8}
-      .spacer{flex:1}
-      .btn-deeplink{
-        display:inline-flex;align-items:center;gap:8px;
-        background:#2185d0;color:#fff;padding:8px 14px;border-radius:999px;
-        text-decoration:none;font-weight:600;box-shadow:0 2px 0 rgba(0,0,0,.06)
-      }
-      .btn-deeplink:hover{filter:brightness(.95)}
-      .btn-deeplink svg{width:18px;height:18px}
-      .back{display:inline-block;margin-top:24px}
-    </style>
-  </head>
-  <body>
-    <main>
-      <h1>О нас</h1>
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Кланы альянса Juggernaut</title>
+<style>
+  body{font-family:system-ui,-apple-system,Segoe UI,Roboto,Ubuntu,Cantarell,Arial,sans-serif;background:#0f1320;color:#e9eef7;margin:0;padding:24px}
+  .wrap{max-width:880px;margin:0 auto}
+  h1{font-size:24px;margin:0 0 18px}
+  .clan-card{
+    background:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+    border:1px solid rgba(255,255,255,.08);
+    border-radius:16px;padding:14px 16px;margin-bottom:10px;
+    display:flex;align-items:center;gap:8px;flex-wrap:wrap
+  }
+  .clan-name{font-weight:700}
+  .clan-tag{opacity:.9}
+  .cr-badge{
+    display:inline-flex;align-items:center;
+    font-size:12px;line-height:1;
+    padding:4px 8px;border-radius:999px;
+    border:1px solid rgba(255,255,255,.18);
+    background:rgba(255,255,255,.06);
+    text-decoration:none;margin-left:6px;
+    transition:transform .12s ease, background .12s ease;
+    white-space:nowrap;user-select:none
+  }
+  .cr-badge:hover{transform:translateY(-1px);background:rgba(255,255,255,.12)}
+  .cr-badge:active{transform:translateY(0)}
+  .cr-badge--game{color:#a3d9ff;border-color:rgba(163,217,255,.35)}
+  .cr-badge--api{color:#b4f0c2;border-color:rgba(180,240,194,.35)}
+  .cr-badge--game::before,.cr-badge--api::before{
+    content:'';width:14px;height:14px;margin-right:6px;border-radius:3px;background:currentColor;opacity:.85
+  }
+  .meta{opacity:.7;font-size:13px;margin-left:6px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>Альянс Juggernaut — наши кланы</h1>
 
-<p>
-  Мы — сильнейший альянс СНГ. В нашем распоряжении 3 клана:
-  "Juggernaut" (#8CUQYQGY),
-  FrostLegion (#2YUJJJQY),
-  MARKO (#2LC2Y208).
-</p>
+  <!-- Кланы. Добавляй/правь здесь, если понадобится -->
+  <div class="clan-card clan-line">
+    <span class="clan-name">Juggernaut</span>
+    <span class="clan-tag" data-tag="#8CUQYQGY">(#8CUQYQGY)</span>
+    <span class="cr-badges"></span>
+    <span class="meta">Мы — сильнейший альянс СНГ</span>
+  </div>
 
-<div class="clan-buttons">
-  <a class="btn open-clan"
-     href="clashroyale://clanInfo?id=8CUQYQGY"
-     data-fallback="https://link.clashroyale.com/?clanInfo?id=8CUQYQGY">
-    Открыть Juggernaut в игре
-  </a>
+  <div class="clan-card clan-line">
+    <span class="clan-name">FrostLegion</span>
+    <span class="clan-tag" data-tag="#2YUJJJQY">(#2YUJJJQY)</span>
+    <span class="cr-badges"></span>
+  </div>
 
-  <a class="btn open-clan"
-     href="clashroyale://clanInfo?id=2YUJJJQY"
-     data-fallback="https://link.clashroyale.com/?clanInfo?id=2YUJJJQY">
-    Открыть FrostLegion
-  </a>
-
-  <a class="btn open-clan"
-     href="clashroyale://clanInfo?id=2LC2Y208"
-     data-fallback="https://link.clashroyale.com/?clanInfo?id=2LC2Y208">
-    Открыть MARKO
-  </a>
+  <div class="clan-card clan-line">
+    <span class="clan-name">MARKO</span>
+    <span class="clan-tag" data-tag="#2LC2Y208">(#2LC2Y208)</span>
+    <span class="cr-badges"></span>
+  </div>
 </div>
 
-<style>
-  .clan-buttons { display:flex; flex-wrap:wrap; gap:12px; margin-top:12px; }
-  .btn { padding:10px 14px; border:1px solid currentColor; border-radius:12px; text-decoration:none; }
-</style>
+<script>
+  // Формируем корректный диплинк на экран клана (важно: %23 вместо #)
+  function crClanDeepLink(tagRaw){
+    const tag = String(tagRaw).replace(/\s+/g,'').replace('#','').toUpperCase();
+    return `https://link.clashroyale.com/?action=OpenClan&tag=%23${tag}&id=com.supercell.clashroyale`;
+  }
 
-<script is:inline>
-  // Пытаемся открыть схему приложения; если не вышло — уходим на fallback
-  document.querySelectorAll('.open-clan').forEach(a => {
-    a.addEventListener('click', (e) => {
-      e.preventDefault();
-      const appUrl = a.getAttribute('href');
-      const fallback = a.dataset.fallback;
-      let jumped = false;
+  // Фолбэк в сторы, если игра не открылась
+  function crStoreFallback(){
+    const isIOS=/iPad|iPhone|iPod/.test(navigator.userAgent);
+    const isAndroid=/Android/.test(navigator.userAgent);
+    if(isIOS) location.href='https://apps.apple.com/app/clash-royale/id1053012308';
+    else if(isAndroid) location.href='https://play.google.com/store/apps/details?id=com.supercell.clashroyale';
+  }
 
-      // Если система не перехватила схему, через 800 мс откроем fallback
-      const t = setTimeout(() => { if (!jumped) location.href = fallback; }, 800);
-      // Попытка открыть напрямую в приложении
-      location.href = appUrl;
+  // Пытаемся открыть диплинк и откатываемся в стор
+  function openCR(link){
+    const t=Date.now();
+    location.href=link;
+    setTimeout(()=>{ if(Date.now()-t<1500) crStoreFallback(); },1200);
+  }
 
-      // через чуть больше секунды «снимаем» таймер, чтобы не было двойных переходов
-      setTimeout(() => { jumped = true; clearTimeout(t); }, 1200);
-    });
+  // Рисуем маленькие бейджи сразу после тега
+  document.querySelectorAll('.clan-line').forEach(line=>{
+    const tagEl=line.querySelector('.clan-tag');
+    const host=line.querySelector('.cr-badges');
+    if(!tagEl||!host) return;
+
+    const raw=tagEl.getAttribute('data-tag')||tagEl.textContent;
+    const tag=String(raw).replace('#','').toUpperCase();
+
+    const aGame=document.createElement('a');
+    aGame.className='cr-badge cr-badge--game';
+    aGame.textContent='В игре';
+    aGame.href=crClanDeepLink(tag);
+    aGame.addEventListener('click',e=>{e.preventDefault();openCR(aGame.href);});
+
+    const aApi=document.createElement('a');
+    aApi.className='cr-badge cr-badge--api';
+    aApi.textContent='RoyaleAPI';
+    aApi.href=`https://royaleapi.com/clan/${tag}`;
+
+    host.appendChild(aGame);
+    host.appendChild(aApi);
   });
 </script>
+</body>
+</html>
