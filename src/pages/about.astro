@@ -1,8 +1,56 @@
 <html lang="ru">
-  <head><meta charset="utf-8" /><title>О нас— Juggernaut</title></head>
-  <body style="max-width:720px;margin:48px auto;padding:0 16px;line-height:1.6">
-    <h1>О нас</h1>
-    <p> Мы - сильнейший альянс СНГ. В нашем распоряжении 3 клана : "Juggernaut" (#8CUQYQGY), FrostLegion (#2YUJJJQY), MARKO (#2LC2Y208).  </p>
-    <a class="back" href="/">На главную</a>
+  <head>
+    <meta charset="utf-8" />
+    <title>О нас — Juggernaut</title>
+    <style>
+      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+      main{max-width:880px;margin:48px auto;padding:0 20px}
+      h1{font-size:clamp(28px,5vw,40px);margin:0 0 16px}
+      p{line-height:1.6}
+      .clans{list-style:none;padding:0;margin:20px 0 28px;display:grid;gap:12px}
+      .clan-row{
+        display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+        border:1px solid #ddd;border-radius:12px;padding:12px 14px;
+      }
+      .name{font-weight:700}
+      .tag{opacity:.8}
+      .spacer{flex:1}
+      .btn-deeplink{
+        display:inline-flex;align-items:center;gap:8px;
+        background:#2185d0;color:#fff;padding:8px 14px;border-radius:999px;
+        text-decoration:none;font-weight:600;box-shadow:0 2px 0 rgba(0,0,0,.06)
+      }
+      .btn-deeplink:hover{filter:brightness(.95)}
+      .btn-deeplink svg{width:18px;height:18px}
+      .back{display:inline-block;margin-top:24px}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>О нас</h1>
+      <p>
+        Мы — сильнейший альянс СНГ. В нашем распоряжении 3 клана:
+        «Juggernaut», «FrostLegion», «MARKO».
+      </p>
+
+      <ul class="clans">
+        {rows.map(c => (
+          <li class="clan-row">
+            <span class="name">{c.name}</span>
+            <span class="tag">{c.tag}</span>
+            <span class="spacer" />
+            <a class="btn-deeplink" href={c.link} target="_blank" rel="noopener">
+              <svg viewBox="0 0 24 24" aria-hidden="true" fill="currentColor">
+                <path d="M14 3h7v7h-2V6.41l-9.29 9.3-1.42-1.42 9.3-9.29H14V3z"></path>
+                <path d="M5 5h6v2H7v10h10v-4h2v6H5z"></path>
+              </svg>
+              Открыть в игре
+            </a>
+          </li>
+        ))}
+      </ul>
+
+      <a class="back" href="/">На главную</a>
+    </main>
   </body>
 </html>
