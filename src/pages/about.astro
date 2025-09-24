@@ -5,6 +5,45 @@ const clans = [
   { name: 'MARKO',       tag: '#2LC2Y208' },
 ];
 
+// формируем deeplink: link.clashroyale.com откроет игру на мобильном сразу на странице клана
+const rows = clans.map(c => ({
+  ...c,
+  id: c.tag.replace('#', ''),
+  link: `https://link.clashroyale.com/?clanInfo?id=${c.tag.replace('#', '')}`,
+}));
+---
+
+<html lang="ru">
+  <head>
+    <meta charset="utf-8" />
+    <title>О нас — Juggernaut</title>
+    <style>
+      body{margin:0;font-family:system-ui,Segoe UI,Roboto,sans-serif}
+      main{max-width:880px;margin:48px auto;padding:0 20px}
+      h1{font-size:clamp(28px,5vw,40px);margin:0 0 16px}
+      p{line-height:1.6}
+      .clans{list-style:none;padding:0;margin:20px 0 28px;display:grid;gap:12px}
+      .clan-row{
+        display:flex;gap:12px;align-items:center;flex-wrap:wrap;
+        border:1px solid #ddd;border-radius:12px;padding:12px 14px;
+      }
+      .name{font-weight:700}
+      .tag{opacity:.8}
+      .spacer{flex:1}
+      .btn-deeplink{
+        display:inline-flex;align-items:center;gap:8px;
+        background:#2185d0;color:#fff;padding:8px 14px;border-radius:999px;
+        text-decoration:none;font-weight:600;box-shadow:0 2px 0 rgba(0,0,0,.06)
+      }
+      .btn-deeplink:hover{filter:brightness(.95)}
+      .btn-deeplink svg{width:18px;height:18px}
+      .back{display:inline-block;margin-top:24px}
+    </style>
+  </head>
+  <body>
+    <main>
+      <h1>О нас</h1>
+
 <p>
   Мы — сильнейший альянс СНГ. В нашем распоряжении 3 клана:
   "Juggernaut" (#8CUQYQGY),
