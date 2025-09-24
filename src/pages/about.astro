@@ -1,3 +1,18 @@
+---
+const clans = [
+  { name: 'Juggernaut',  tag: '#8CUQYQGY' },
+  { name: 'FrostLegion', tag: '#2YUJJJQY' },
+  { name: 'MARKO',       tag: '#2LC2Y208' },
+];
+
+// формируем deeplink: link.clashroyale.com откроет игру на мобильном сразу на странице клана
+const rows = clans.map(c => ({
+  ...c,
+  id: c.tag.replace('#', ''),
+  link: `https://link.clashroyale.com/?clanInfo?id=${c.tag.replace('#', '')}`,
+}));
+---
+
 <html lang="ru">
   <head>
     <meta charset="utf-8" />
