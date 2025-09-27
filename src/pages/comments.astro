@@ -1,0 +1,183 @@
+---
+import { supabase } from '../lib/supabase';
+---
+
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Комментарии — Juggernaut</title>
+  <style>
+    :root{ --bg:#0f1320; --fg:#e9eef7; --muted:#a8b0c3; --card:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03)); --stroke:rgba(255,255,255,.08); }
+    *{box-sizing:border-box}
+    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;sans-serif;color:var(--fg);background:var(--bg)}
+    .wrap{max-width:720px;margin:40px auto;padding:0 20px}
+    .card{background:var(--card);border:1px solid var(--stroke);border-radius:16px;padding:16px}
+    h1{margin:0 0 16px}
+    input,textarea{width:100%;padding:10px;margin:6px 0 12px;border-radius:10px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--fg)}
+    button{padding:10px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.2);background:rgba(255,255,255,.06);color:var(--fg);cursor:pointer}
+    button:hover{background:rgba(255,255,255,.12)}
+    .row{display:flex;gap:8px;flex-wrap:wrap}
+    .muted{color:var(--muted);font-size:13px}
+    .comment{padding:12px;border:1px solid var(--stroke);border-radius:12px;margin:10px 0}
+    .head{display:flex;justify-content:space-between;gap:8px}
+    .home{display:inline-block;margin-top:16px;text-decoration:none;border:1px solid rgba(255,255,255,.2);padding:10px 16px;border-radius:999px;background:rgba(255,255,255,.06);color:var(--fg)}
+    .home:hover{background:rgba(255,255,255,.12)}
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div class="card">
+      <h1>Комментарии</h1>
+
+      <!-- Аутентификация -->
+      <div id="auth">
+        <div class="row">
+          <input id="nickname" placeholder="Никнейм (обязателен)" />
+          <input id="email" type="email" placeholder="E-mail (по желанию)" />
+          <input id="password" type="password" placeholder="Пароль" />
+        </div>
+        <div class="row">
+          <button id="signup">Зарегистрироваться</button>
+          <button id="signin">Войти</button>
+          <button id="signout" style="display:none">Выйти</button>
+        </div>
+        <div id="who" class="muted"></div>
+      </div>
+
+      <!-- Редактор комментария -->
+      <div id="editor" style="display:none;margin-top:12px">
+        <textarea id="text" rows="3" placeholder="Оставьте комментарий..."></textarea>
+        <button id="send">Отправить</button>
+      </div>
+
+      <hr style="border:none;border-top:1px solid var(--stroke);margin:16px 0" />
+
+      <!-- Лента -->
+      <div id="feed"></div>
+
+      <a href="/" class="home">⬅ На главную</a>
+    </div>
+  </div>
+
+  <script type="module">
+    import { supabase } from '/src/lib/supabase.ts';
+
+    const $ = (id) => document.getElementById(id);
+    const nickname = $('nickname');
+    const email    = $('email');
+    const pass     = $('password');
+    const who      = $('who');
+    const editor   = $('editor');
+    const signup   = $('signup');
+    const signin   = $('signin');
+    const signout  = $('signout');
+    const text     = $('text');
+    const send     = $('send');
+    const feed     = $('feed');
+
+    // Сервисная функция: если нет e-mail, делаем технический
+    const synthEmail = (nick) => `${nick.trim().toLowerCase()}@noemail.local`;
+
+    // Регистрация: ник + пароль, email опционален
+    signup.onclick = async () => {
+      const nick = nickname.value.trim();
+      const pwd  = pass.value;
+      if (!nick || !pwd) return alert('Ник и пароль обязательны.');
+      const eml = email.value.trim() || synthEmail(nick);
+
+      const { data, error } = await supabase.auth.signUp({
+        email: eml,
+        password: pwd,
+        options: { data: { nickname: nick } }
+      });
+      if (error) return alert(error.message);
+
+      // если email "реальный" — Supabase может попросить подтвердить почту
+      pass.value = '';
+    };
+
+    // Вход: если e-mail пуст — используем синтетический по нику
+    signin.onclick = async () => {
+      const nick = nickname.value.trim();
+      const eml = email.value.trim() || synthEmail(nick);
+      const { error } = await supabase.auth.signInWithPassword({ email: eml, password: pass.value });
+      if (error) return alert(error.message);
+      pass.value = '';
+    };
+
+    signout.onclick = async () => { await supabase.auth.signOut(); };
+
+    // Сессия
+    supabase.auth.onAuthStateChange(async (_evt, session) => {
+      if (session?.user) {
+        who.textContent = `Вы вошли как: ${session.user.user_metadata?.nickname || session.user.email}`;
+        editor.style.display = '';
+        signout.style.display = '';
+        // гарантируем, что в profiles есть запись (триггер создаёт автоматически)
+      } else {
+        who.textContent = 'Вы не авторизованы';
+        editor.style.display = 'none';
+        signout.style.display = 'none';
+      }
+    });
+
+    // Отправка комментария
+    send.onclick = async () => {
+      const msg = (text.value || '').trim();
+      if (!msg) return;
+      const { data: user } = await supabase.auth.getUser();
+      if (!user.user) return alert('Войдите, чтобы комментировать');
+
+      // вставляем запись, author берём = auth.uid() на сервере через RLS? —
+      // проще явно запросить свой id из profiles
+      const { data: my } = await supabase
+        .from('profiles').select('id,nickname').eq('id', user.user.id).single();
+
+      const { error } = await supabase
+        .from('comments').insert({ author: my.id, text: msg });
+
+      if (error) return alert(error.message);
+      text.value = '';
+    };
+
+    // Подписка на ленту
+    async function load() {
+      const { data, error } = await supabase
+        .from('comments')
+        .select('id, text, created_at, author:profiles(nickname)')
+        .order('id', { ascending: false })
+        .limit(100);
+      if (error) return console.error(error);
+      render(data);
+    }
+
+    function esc(s){return s.replace(/[<>&]/g, m => ({'<':'&lt;','>':'&gt;','&':'&amp;'}[m]))}
+    function render(rows){
+      feed.innerHTML = '';
+      rows.forEach(r=>{
+        const el = document.createElement('div');
+        el.className = 'comment';
+        el.innerHTML = `
+          <div class="head">
+            <strong>${esc(r.author?.nickname || 'Аноним')}</strong>
+            <span class="muted">${new Date(r.created_at).toLocaleString()}</span>
+          </div>
+          <div>${esc(r.text)}</div>
+        `;
+        feed.appendChild(el);
+      });
+    }
+
+    await load();
+
+    // realtime (опционально)
+    supabase.channel('comments-stream')
+      .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'comments' }, payload => {
+        render([{ ...payload.new, author: { nickname: who.textContent.replace('Вы вошли как: ','') } , created_at: payload.new.created_at }, ...Array.from(feed.children).map(c=>c.__row)].filter(Boolean));
+        load(); // простая перезагрузка для согласованности
+      }).subscribe();
+  </script>
+</body>
+</html>
