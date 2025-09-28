@@ -1,5 +1,5 @@
 import { useEffect, useState } from 'preact/hooks';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabase';
 
 export default function AuthBox() {
   const [userEmail, setUserEmail] = useState<string | null>(null);
