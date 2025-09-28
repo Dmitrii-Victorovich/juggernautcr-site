@@ -1,4 +1,4 @@
-import { supabase } from "../lib/supabaseClient";
+import { supabase } from '../lib/supabase';
 
 export type Role = 'user' | 'clanmate' | 'admin' | 'creator' | 'streamer';
 
