@@ -1,155 +1,171 @@
-// Preact-версия Comments.tsx
 import { useEffect, useState } from 'preact/hooks';
 import { supabase } from '../lib/supabase';
-import {
-  fetchCommentsTree, sendComment, upsertVote,
-  getMyProfile, deleteComment, togglePin, toggleReplies, toggleDislikes,
-} from '../lib/comments';
-import type { Comment, Role } from '../lib/comments';
 
-// Если у тебя есть отдельный бейдж — можешь импортировать его.
-// Ниже — простая внутренняя версия бейджа, чтобы точно собрать проект.
-function RoleBadge({ role }: { role: 'user'|'clanmate'|'admin'|'creator'|'streamer' }) {
-  const map: Record<string, { label: string; style: string }> = {
-    creator:  { label: 'Создатель', style: 'background:#7c3aed' },
-    admin:    { label: 'Админ',     style: 'background:#ef4444' },
-    clanmate: { label: 'Соклан',    style: 'background:#2563eb' },
-    streamer: { label: 'Стример',   style: 'background:#db2777' },
-    user:     { label: '',          style: 'display:none' },
-  };
-  const { label, style } = map[role] ?? map.user;
-  if (!label) return null;
-  return (
-    <span style={`display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;${style};`}>
-      {label}
-    </span>
-  );
-}
+type Role = 'user' | 'clanmate' | 'admin' | 'creator' | 'streamer';
 
-export default function Comments(props: { slug?: string }) {
-  const { slug } = props;
-  const [tree, setTree] = useState<Comment[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [replyTo, setReplyTo] = useState<number | null>(null);
+type Row = {
+  id: number;
+  content: string;
+  created_at: string;
+  parent_id: number | null;
+  pinned: boolean | null;
+  author_id: string | null;
+  profiles?: { username: string | null; role: Role | null } | null;
+};
+
+export default function Comments({ slug = 'feedback' }: { slug?: string }) {
+  const [items, setItems] = useState<Row[]>([]);
   const [text, setText] = useState('');
-  const [me, setMe] = useState<{ id: string; role: Role } | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [posting, setPosting] = useState(false);
 
-  const isAdmin = me?.role === 'admin' || me?.role === 'creator';
+  useEffect(() => { load(); }, [slug]);
 
   async function load() {
     setLoading(true);
     try {
-      const data = await fetchCommentsTree(slug);
-      setTree(data);
-      if (!me) setMe(await getMyProfile());
+      // Попробуем с FK именем comments_author_id_fkey
+      const withFk = await selectWithFk('comments_author_id_fkey');
+      if (!withFk.error) {
+        setItems(withFk.data ?? []);
+        return;
+      }
+
+      // Попробуем альтернативное имя FK (если ты не переименовывал)
+      const withOld = await selectWithFk('comments_author_fk');
+      if (!withOld.error) {
+        setItems(withOld.data ?? []);
+        return;
+      }
+
+      // Фолбек: без JOIN, чтобы хотя бы комментарии показать
+      const plain = await supabase
+        .from('comments')
+        .select('id, content, created_at, parent_id, pinned, author_id')
+        .eq('slug', slug)
+        .order('pinned', { ascending: false })
+        .order('created_at', { ascending: false });
+
+      if (plain.error) throw plain.error;
+      setItems((plain.data as Row[]) ?? []);
+    } catch (e) {
+      console.error('comments load fatal:', e);
+      setItems([]);
     } finally {
       setLoading(false);
     }
   }
 
-  useEffect(() => {
-    load();
-    // live-обновления
-    const ch1 = supabase
-      .channel('comments-ch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, load)
-      .subscribe();
-    const ch2 = supabase
-      .channel('votes-ch')
-      .on('postgres_changes', { event: '*', schema: 'public', table: 'comment_votes' }, load)
-      .subscribe();
-    return () => {
-      supabase.removeChannel(ch1);
-      supabase.removeChannel(ch2);
-    };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [slug]);
+  function selectWithFk(fkName: string) {
+    const sel =
+      `id, content, created_at, parent_id, pinned, author_id, ` +
+      `profiles!${fkName}(username, role)`;
 
-  async function submit() {
-    const value = text.trim();
-    if (!value) return;
+    return supabase
+      .from('comments')
+      .select(sel)
+      .eq('slug', slug)
+      .order('pinned', { ascending: false })
+      .order('created_at', { ascending: false });
+  }
+
+  async function submit(e: Event) {
+    e.preventDefault();
+    const content = text.trim();
+    if (!content) return;
+
+    setPosting(true);
     try {
-      await sendComment({ content: value, parentId: replyTo, slug });
+      const { data: { user }, error: uErr } = await supabase.auth.getUser();
+      if (uErr) throw uErr;
+      if (!user) {
+        alert('Сначала войдите, чтобы писать комментарии.');
+        return;
+      }
+
+      const ins = await supabase
+        .from('comments')
+        .insert({ content, slug, author_id: user.id })
+        .select('id'); // чтобы понять, что всё ок
+
+      if (ins.error) throw ins.error;
       setText('');
-      setReplyTo(null);
+      await load();
     } catch (e: any) {
-      alert(e?.message ?? String(e));
+      const msg = String(e?.message ?? e);
+      // Сообщение про RLS-ограничение "1 коммент раз в 5 минут" будет тоже здесь
+      alert(msg);
     } finally {
-      load();
+      setPosting(false);
     }
   }
 
-  function Node({ node, depth = 0 }: { node: Comment; depth?: number }) {
-    const time = new Date(node.created_at).toLocaleString();
+  function badge(role?: Role | null) {
+    if (!role || role === 'user') return null;
+    const label =
+      role === 'creator' ? 'Создатель' :
+      role === 'admin'    ? 'Админ' :
+      role === 'clanmate' ? 'Соклановец' :
+      role === 'streamer' ? 'Стример' : role;
 
     return (
-      <div style={{ marginLeft: depth * 16, borderLeft: depth ? '1px solid rgba(255,255,255,.08)' : 'none', paddingLeft: depth ? 12 : 0, marginTop: 12 }}>
-        <div style={{ display:'flex', alignItems:'center', gap:8 }}>
-          <RoleBadge role={node.author.role} />
-          <strong>{node.author.username ?? 'Безымянный'}</strong>
-          {node.pinned && (
-            <span style={{ fontSize:12, padding:'2px 6px', border:'1px solid rgba(255,255,255,.2)', borderRadius:999 }}>📌 закреплён</span>
-          )}
-          <span style={{ opacity:.6, fontSize:12, marginLeft:4 }}>{time}</span>
-        </div>
-
-        <p style={{ margin:'6px 0 8px' }}>{node.content}</p>
-
-        <div style={{ display:'flex', gap:12, alignItems:'center', fontSize:14 }}>
-          <button onClick={() => upsertVote(node.id, 1)}>👍 {node.likes}</button>
-
-          {node.allow_dislikes && (
-            <button onClick={() => upsertVote(node.id, -1)}>👎 {node.dislikes}</button>
-          )}
-
-          {node.allow_replies && (
-            <button onClick={() => setReplyTo(node.id)} title="Ответить">↩️ Ответить</button>
-          )}
-
-          {isAdmin && (
-            <>
-              <button onClick={() => togglePin(node.id, !node.pinned)}>{node.pinned ? 'Открепить' : 'Закрепить'}</button>
-              <button onClick={() => toggleReplies(node.id, !node.allow_replies)}>{node.allow_replies ? 'Закрыть ответы' : 'Открыть ответы'}</button>
-              <button onClick={() => toggleDislikes(node.id, !node.allow_dislikes)}>{node.allow_dislikes ? 'Выключить дизлайки' : 'Включить дизлайки'}</button>
-              <button onClick={() => { if (confirm('Удалить комментарий?')) deleteComment(node.id); }}>🗑 Удалить</button>
-            </>
-          )}
-        </div>
-
-        {node.children.map((child) => (
-          <Node key={child.id} node={child} depth={depth + 1} />
-        ))}
-      </div>
+      <span style={{
+        marginLeft: 8,
+        padding: '2px 8px',
+        borderRadius: 999,
+        fontSize: 12,
+        border: '1px solid rgba(255,255,255,.2)',
+        opacity: .9
+      }}>
+        {label}
+      </span>
     );
   }
 
   return (
-    <div>
-      <h3 style={{ marginBottom: 12 }}>Комментарии</h3>
+    <div style={{maxWidth:880, margin:'0 auto'}}>
+      <h3 style={{margin:'16px 0 8px'}}>Комментарии</h3>
 
-      {replyTo && (
-        <div style={{ marginBottom: 6, fontSize: 13 }}>
-          Ответ на комментарий #{replyTo} — <button onClick={() => setReplyTo(null)}>отменить</button>
-        </div>
-      )}
-
-      <div style={{ display:'flex', gap:8, marginBottom: 16 }}>
-        <textarea
-          value={text}
-          onInput={(e: any) => setText((e?.currentTarget?.value ?? '') as string)}
+      <form onSubmit={submit} style={{display:'flex', gap:8, marginBottom:12}}>
+        <input
+          style={{flex:1, padding:'8px 10px', borderRadius:8, border:'1px solid rgba(255,255,255,.2)'}}
           placeholder="Введите текст…"
-          rows={3}
-          style={{ flex: 1, resize: 'vertical' }}
+          value={text}
+          onInput={(e:any)=>setText(e.currentTarget.value)}
         />
-        <button onClick={submit} style={{ padding: '8px 14px' }}>Отправить</button>
-      </div>
+        <button disabled={posting}>Отправить</button>
+      </form>
 
       {loading ? (
         <div>Загрузка…</div>
-      ) : tree.length === 0 ? (
-        <div>Пока нет комментариев</div>
+      ) : items.length === 0 ? (
+        <div style={{opacity:.7}}>Пока нет комментариев</div>
       ) : (
-        tree.map((root) => <Node key={root.id} node={root} />)
+        <div style={{display:'grid', gap:8}}>
+          {items.map((c) => {
+            const name = c.profiles?.username ?? 'Гость';
+            const role = (c.profiles?.role ?? 'user') as Role;
+            return (
+              <div key={c.id}
+                style={{
+                  background:'linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03))',
+                  border:'1px solid rgba(255,255,255,.12)',
+                  borderRadius:12, padding:12
+                }}>
+                <div style={{display:'flex', justifyContent:'space-between', marginBottom:6}}>
+                  <div>
+                    <strong>{name}</strong>
+                    {badge(role)}
+                  </div>
+                  <div style={{opacity:.6, fontSize:12}}>
+                    {new Date(c.created_at).toLocaleString()}
+                  </div>
+                </div>
+                <div>{c.content}</div>
+              </div>
+            );
+          })}
+        </div>
       )}
     </div>
   );
