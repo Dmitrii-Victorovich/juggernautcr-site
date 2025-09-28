@@ -20,6 +20,8 @@
       color:var(--fg);
       background:var(--bg);
     }
+    /* общий контейнер той же ширины, что и main */
+    .container{max-width:820px;margin:20px auto 0;padding:0 20px}
     main{max-width:820px;margin:40px auto;padding:0 20px}
     h1{margin:0 0 20px;font-size:28px}
     .wrap{
@@ -67,10 +69,17 @@
     }
     .btn-home:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
     .btn-home:active{transform:translateY(0)}
+    /* ряд кнопок снизу */
+    .btn-row{display:flex;gap:12px;flex-wrap:wrap;margin-top:12px}
   </style>
 </head>
 <body>
-<a href="/" class="btn-home">На Родину</a>
+
+  <!-- ВЕРХНЯЯ КНОПКА ВЫРОВНЕНА ПО КОНТЕЙНЕРУ -->
+  <header class="container">
+    <a href="/" class="btn-home">На Родину</a>
+  </header>
+
   <main>
     <h1>По пустякам не беспокоить</h1>
 
@@ -85,7 +94,7 @@
       <div class="bio">
         <p>Короткая биография — длинный пенсл.</p>
         <p>Гений, нищий, плейгёрл, филантроп.</p>
-                           <br>
+        <br>
 
         <p style="margin:10px 0 6px;">Для коммерческих предложений обращаться:</p>
         <div class="icons">
@@ -101,8 +110,11 @@
       </div>
     </section>
 
-<a href="/feedback" class="btn-home">💬 Отзывы и предложения</a>
-
+    <!-- РЯД КНОПОК: ОТЗЫВЫ + КУМИР -->
+    <div class="btn-row">
+      <a href="/feedback" class="btn-home">💬 Отзывы и предложения</a>
+      <a href="/idol" class="btn-home">⭐ Кумир</a>
+    </div>
   </main>
 </body>
 </html>
