@@ -1,17 +1,37 @@
-import { useEffect, useState } from "react";
-import { supabase } from "../lib/supabaseClient";
+// Preact-версия Comments.tsx
+import { useEffect, useState } from 'preact/hooks';
+import { supabase } from '../lib/supabaseClient';
 import {
   fetchCommentsTree, sendComment, upsertVote,
   getMyProfile, deleteComment, togglePin, toggleReplies, toggleDislikes,
-  type Comment, type Role
-} from "../lib/comments";
-import { RoleBadge } from "./RoleBadge";
+} from '../lib/comments';
+import type { Comment, Role } from '../lib/comments';
 
-export default function Comments({ slug }: { slug?: string }) {
+// Если у тебя есть отдельный бейдж — можешь импортировать его.
+// Ниже — простая внутренняя версия бейджа, чтобы точно собрать проект.
+function RoleBadge({ role }: { role: 'user'|'clanmate'|'admin'|'creator'|'streamer' }) {
+  const map: Record<string, { label: string; style: string }> = {
+    creator:  { label: 'Создатель', style: 'background:#7c3aed' },
+    admin:    { label: 'Админ',     style: 'background:#ef4444' },
+    clanmate: { label: 'Соклан',    style: 'background:#2563eb' },
+    streamer: { label: 'Стример',   style: 'background:#db2777' },
+    user:     { label: '',          style: 'display:none' },
+  };
+  const { label, style } = map[role] ?? map.user;
+  if (!label) return null;
+  return (
+    <span style={`display:inline-flex;align-items:center;padding:2px 8px;border-radius:999px;font-size:12px;${style};`}>
+      {label}
+    </span>
+  );
+}
+
+export default function Comments(props: { slug?: string }) {
+  const { slug } = props;
   const [tree, setTree] = useState<Comment[]>([]);
   const [loading, setLoading] = useState(true);
   const [replyTo, setReplyTo] = useState<number | null>(null);
-  const [text, setText] = useState("");
+  const [text, setText] = useState('');
   const [me, setMe] = useState<{ id: string; role: Role } | null>(null);
 
   const isAdmin = me?.role === 'admin' || me?.role === 'creator';
@@ -29,23 +49,31 @@ export default function Comments({ slug }: { slug?: string }) {
 
   useEffect(() => {
     load();
-    const ch1 = supabase.channel('comments-ch')
+    // live-обновления
+    const ch1 = supabase
+      .channel('comments-ch')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comments' }, load)
       .subscribe();
-    const ch2 = supabase.channel('votes-ch')
+    const ch2 = supabase
+      .channel('votes-ch')
       .on('postgres_changes', { event: '*', schema: 'public', table: 'comment_votes' }, load)
       .subscribe();
-    return () => { supabase.removeChannel(ch1); supabase.removeChannel(ch2); };
+    return () => {
+      supabase.removeChannel(ch1);
+      supabase.removeChannel(ch2);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [slug]);
 
   async function submit() {
-    if (!text.trim()) return;
+    const value = text.trim();
+    if (!value) return;
     try {
-      await sendComment({ content: text.trim(), parentId: replyTo, slug });
-      setText("");
+      await sendComment({ content: value, parentId: replyTo, slug });
+      setText('');
       setReplyTo(null);
-    } catch (e:any) {
-      alert(e.message ?? String(e));
+    } catch (e: any) {
+      alert(e?.message ?? String(e));
     } finally {
       load();
     }
@@ -59,7 +87,9 @@ export default function Comments({ slug }: { slug?: string }) {
         <div style={{ display:'flex', alignItems:'center', gap:8 }}>
           <RoleBadge role={node.author.role} />
           <strong>{node.author.username ?? 'Безымянный'}</strong>
-          {node.pinned && <span style={{ fontSize:12, padding:'2px 6px', border:'1px solid rgba(255,255,255,.2)', borderRadius:999 }}>📌 закреплён</span>}
+          {node.pinned && (
+            <span style={{ fontSize:12, padding:'2px 6px', border:'1px solid rgba(255,255,255,.2)', borderRadius:999 }}>📌 закреплён</span>
+          )}
           <span style={{ opacity:.6, fontSize:12, marginLeft:4 }}>{time}</span>
         </div>
 
@@ -68,17 +98,14 @@ export default function Comments({ slug }: { slug?: string }) {
         <div style={{ display:'flex', gap:12, alignItems:'center', fontSize:14 }}>
           <button onClick={() => upsertVote(node.id, 1)}>👍 {node.likes}</button>
 
-          {/* 👎 скрываем, если отключено */}
           {node.allow_dislikes && (
             <button onClick={() => upsertVote(node.id, -1)}>👎 {node.dislikes}</button>
           )}
 
-          {/* Ответ скрыт, если закрыты ответы */}
           {node.allow_replies && (
             <button onClick={() => setReplyTo(node.id)} title="Ответить">↩️ Ответить</button>
           )}
 
-          {/* Панель модератора */}
           {isAdmin && (
             <>
               <button onClick={() => togglePin(node.id, !node.pinned)}>{node.pinned ? 'Открепить' : 'Закрепить'}</button>
@@ -89,7 +116,7 @@ export default function Comments({ slug }: { slug?: string }) {
           )}
         </div>
 
-        {node.children.map(child => (
+        {node.children.map((child) => (
           <Node key={child.id} node={child} depth={depth + 1} />
         ))}
       </div>
@@ -105,10 +132,11 @@ export default function Comments({ slug }: { slug?: string }) {
           Ответ на комментарий #{replyTo} — <button onClick={() => setReplyTo(null)}>отменить</button>
         </div>
       )}
+
       <div style={{ display:'flex', gap:8, marginBottom: 16 }}>
         <textarea
           value={text}
-          onChange={e => setText(e.target.value)}
+          onInput={(e: any) => setText((e?.currentTarget?.value ?? '') as string)}
           placeholder="Введите текст…"
           rows={3}
           style={{ flex: 1, resize: 'vertical' }}
@@ -116,9 +144,13 @@ export default function Comments({ slug }: { slug?: string }) {
         <button onClick={submit} style={{ padding: '8px 14px' }}>Отправить</button>
       </div>
 
-      {loading ? <div>Загрузка…</div> :
-       tree.length === 0 ? <div>Пока нет комментариев</div> :
-       tree.map(root => <Node key={root.id} node={root} />)}
+      {loading ? (
+        <div>Загрузка…</div>
+      ) : tree.length === 0 ? (
+        <div>Пока нет комментариев</div>
+      ) : (
+        tree.map((root) => <Node key={root.id} node={root} />)
+      )}
     </div>
   );
 }
