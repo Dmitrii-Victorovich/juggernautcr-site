@@ -6,7 +6,7 @@ type Role = 'user' | 'clanmate' | 'admin' | 'creator' | 'streamer';
 export default function AuthBox() {
   const [mode, setMode] = useState<'register' | 'login'>('register');
 
-  // общее состояние
+  // общее
   const [loading, setLoading] = useState(true);
   const [me, setMe] = useState<{ email: string | null; role: Role; username: string } | null>(null);
 
@@ -14,61 +14,74 @@ export default function AuthBox() {
   const [regEmail, setRegEmail] = useState('');
   const [regUsername, setRegUsername] = useState('');
   const [regPassword, setRegPassword] = useState('');
-  const [regBusy, setRegBusy] = useState(false);
-  const [regSent, setRegSent] = useState(false);
+  const [regBusy, setRegBusy]   = useState(false);
+  const [regSent, setRegSent]   = useState(false);
 
   // вход
-  const [logEmail, setLogEmail] = useState('');
+  const [logEmail, setLogEmail]     = useState('');
   const [logPassword, setLogPassword] = useState('');
-  const [logBusy, setLogBusy] = useState(false);
+  const [logBusy, setLogBusy]       = useState(false);
 
-  // установка ника после входа (если пустой)
+  // ник после входа (если пустой)
   const [newUsername, setNewUsername] = useState('');
   const [savingUsername, setSavingUsername] = useState(false);
 
   useEffect(() => {
-    const sub = supabase.auth.onAuthStateChange(async () => {
-      await loadMe();
+    const { data: sub } = supabase.auth.onAuthStateChange(() => {
+      // не ждём в useEffect, просто триггерим подгрузку
+      loadMe();
     });
     loadMe();
-    return () => { sub.data.subscription?.unsubscribe(); };
+    return () => sub?.subscription?.unsubscribe?.();
   }, []);
 
   async function loadMe() {
     setLoading(true);
-    const { data: { user } } = await supabase.auth.getUser();
-    if (!user) {
-      setMe(null);
-      setLoading(false);
-      return;
-    }
-    const { data: profile } = await supabase
-      .from('profiles')
-      .select('username, role')
-      .eq('id', user.id)
-      .maybeSingle();
+    try {
+      const { data: { user }, error } = await supabase.auth.getUser();
+      if (error) throw error;
 
-    setMe({
-      email: user.email ?? null,
-      role: (profile?.role ?? 'user') as Role,
-      username: profile?.username ?? '',
-    });
-    setLoading(false);
+      if (!user) {
+        setMe(null);
+        return;
+      }
+
+      const { data: profile, error: pErr } = await supabase
+        .from('profiles')
+        .select('username, role')
+        .eq('id', user.id)
+        .maybeSingle();
+      if (pErr) throw pErr;
+
+      setMe({
+        email: user.email ?? null,
+        role: (profile?.role ?? 'user') as Role,
+        username: profile?.username ?? '',
+      });
+    } catch (e:any) {
+      console.warn('loadMe error:', e?.message ?? e);
+      setMe(null);
+    } finally {
+      setLoading(false);
+    }
   }
 
   async function checkUsernameFree(name: string) {
     const u = name.trim();
     if (!u) return false;
-    // регистронезависимая проверка уникальности
-    const { data, error } = await supabase
-      .from('profiles')
-      .select('id', { count: 'exact', head: true })
-      .ilike('username', u);
-    if (error) return true; // не блокируем из-за ошибки проверки
-    return (data === null); // при head:true data=null, нас интересует сам факт отсутствия ошибки/совпадений
+    try {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('id')
+        .ilike('username', u) // регистронезависимая «равно»
+        .limit(1);
+      if (error) return true;         // не блокируем регу из-за сбоя проверки
+      return (data?.length ?? 0) === 0;
+    } catch {
+      return true;
+    }
   }
 
-  // регистрация: email + ник + пароль
   async function register(e: Event) {
     e.preventDefault();
     const email = regEmail.trim();
@@ -87,46 +100,49 @@ export default function AuthBox() {
     }
 
     setRegBusy(true);
-    const redirectTo =
-      typeof window !== 'undefined'
-        ? `${window.location.origin}${window.location.pathname}`
-        : undefined;
+    try {
+      const redirectTo =
+        typeof window !== 'undefined'
+          ? `${window.location.origin}${window.location.pathname}`
+          : undefined;
 
-    const { data, error } = await supabase.auth.signUp({
-      email,
-      password,
-      options: {
-        data: { username },          // триггер прочитает и запишет в profiles.username
-        emailRedirectTo: redirectTo, // после клика по письму вернёт сюда и залогинит
+      const { data, error } = await supabase.auth.signUp({
+        email,
+        password,
+        options: {
+          data: { username },         // триггер положит в profiles.username
+          emailRedirectTo: redirectTo // после клика вернёт сюда и залогинит
+        }
+      });
+      if (error) throw error;
+
+      if (!data.session) {
+        setRegSent(true); // письмо ушло, ждём клик
+      } else {
+        await loadMe();   // если подтверждение отключено
       }
-    });
-    setRegBusy(false);
-
-    if (error) {
-      alert(error.message);
-      return;
-    }
-
-    // с подтверждением e-mail здесь session=null — ждём письмо
-    if (!data.session) {
-      setRegSent(true);
-    } else {
-      // если подтверждение выключено — сразу залогинены
-      await loadMe();
+    } catch (e:any) {
+      alert(e?.message ?? String(e));
+    } finally {
+      setRegBusy(false);
     }
   }
 
-  // вход по паролю
   async function login(e: Event) {
     e.preventDefault();
     setLogBusy(true);
-    const { error } = await supabase.auth.signInWithPassword({
-      email: logEmail.trim(),
-      password: logPassword,
-    });
-    setLogBusy(false);
-    if (error) return alert(error.message);
-    await loadMe();
+    try {
+      const { error } = await supabase.auth.signInWithPassword({
+        email: logEmail.trim(),
+        password: logPassword,
+      });
+      if (error) throw error;
+      await loadMe();
+    } catch (e:any) {
+      alert(e?.message ?? String(e));
+    } finally {
+      setLogBusy(false);
+    }
   }
 
   async function signOut() {
@@ -134,7 +150,6 @@ export default function AuthBox() {
     await loadMe();
   }
 
-  // установка ника после входа (если он ещё пустой)
   async function saveUsernameFirstTime(e?: Event) {
     if (e) e.preventDefault();
     const u = newUsername.trim();
@@ -147,24 +162,25 @@ export default function AuthBox() {
     if (!user) return alert('Сначала войдите.');
 
     setSavingUsername(true);
-    const { error } = await supabase
-      .from('profiles')
-      .upsert({ id: user.id, username: u }, { onConflict: 'id' });
-    setSavingUsername(false);
-
-    if (error) {
-      const msg = String(error.message || error);
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .upsert({ id: user.id, username: u }, { onConflict: 'id' });
+      if (error) throw error;
+      await loadMe();
+      alert('Ник сохранён.');
+    } catch (e:any) {
+      const msg = String(e?.message ?? e);
       if (/unique|uniq_profiles_username_ci|duplicate/i.test(msg)) {
-        return alert('Такой ник уже занят. Выберите другой.');
+        alert('Такой ник уже занят. Выберите другой.');
+      } else if (/once|set only once/i.test(msg)) {
+        alert('Ник уже был установлен — изменить может только админ/создатель.');
+      } else {
+        alert(msg);
       }
-      if (/once|set only once/i.test(msg)) {
-        return alert('Ник уже был установлен — изменить может только админ/создатель.');
-      }
-      return alert(msg);
+    } finally {
+      setSavingUsername(false);
     }
-
-    await loadMe();
-    alert('Ник сохранён.');
   }
 
   // ---------- UI ----------
@@ -183,7 +199,6 @@ export default function AuthBox() {
           <button onClick={signOut}>Выйти</button>
         </div>
 
-        {/* форма задания ника показывается, если в профиле ник ещё не установлен */}
         {!me.username && (
           <form onSubmit={saveUsernameFirstTime} style={{ display:'grid', gap:8 }}>
             <label>Задайте ник (можно только один раз)</label>
@@ -205,7 +220,7 @@ export default function AuthBox() {
     );
   }
 
-  // не авторизован: регистрация / вход
+  // не авторизован
   return (
     <div style={{ background:'linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03))', border:'1px solid rgba(255,255,255,.12)', borderRadius:12, padding:16, maxWidth:580, margin:'0 auto 16px' }}>
       <div style={{ display:'flex', gap:8, marginBottom:12 }}>
