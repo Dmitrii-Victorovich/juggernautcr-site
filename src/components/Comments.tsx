@@ -1,6 +1,6 @@
 // Preact-версия Comments.tsx
 import { useEffect, useState } from 'preact/hooks';
-import { supabase } from '../lib/supabaseClient';
+import { supabase } from '../lib/supabase';
 import {
   fetchCommentsTree, sendComment, upsertVote,
   getMyProfile, deleteComment, togglePin, toggleReplies, toggleDislikes,
