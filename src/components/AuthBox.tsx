@@ -105,15 +105,18 @@ export default function AuthBox() {
         typeof window !== 'undefined'
           ? `${window.location.origin}${window.location.pathname}`
           : undefined;
-
       const { data, error } = await supabase.auth.signUp({
-        email,
-        password,
-        options: {
-          data: { username },         // триггер положит в profiles.username
-          emailRedirectTo: redirectTo // после клика вернёт сюда и залогинит
-        }
-      });
+  email,
+  password,
+  options: {
+    data: {
+      username,
+      full_name: username, // <- добавили
+      name: username       // <- добавили
+    },
+    emailRedirectTo: redirectTo,
+  }
+});
       if (error) throw error;
 
       if (!data.session) {
