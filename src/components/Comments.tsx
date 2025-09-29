@@ -14,6 +14,7 @@ type CommentRow = {
   pinned: boolean | null;
   allow_replies: boolean | null;
   allow_dislikes: boolean | null;
+  admin_locked_by_creator?: boolean | null;   // NEW
   profiles?: Profile;
 };
 
@@ -38,6 +39,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
   const [replyText, setReplyText] = useState('');
 
   const isAdmin = me.role === 'creator' || me.role === 'admin';
+  const isCreator = me.role === 'creator';
 
   useEffect(() => {
     (async () => {
@@ -74,7 +76,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
         // фолбек без JOIN, чтобы всё равно показать ленту
         const plain = await supabase
           .from('comments')
-          .select('id, content, created_at, parent_id, author_id, pinned, allow_replies, allow_dislikes')
+          .select('id, content, created_at, parent_id, author_id, pinned, allow_replies, allow_dislikes, admin_locked_by_creator') // NEW
           .eq('slug', slug)
           .order('pinned', { ascending: false })
           .order('created_at', { ascending: false });
@@ -121,7 +123,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
 
   function selectWithFk(fkName: string) {
     const sel =
-      `id, content, created_at, parent_id, author_id, pinned, allow_replies, allow_dislikes, ` +
+      `id, content, created_at, parent_id, author_id, pinned, allow_replies, allow_dislikes, admin_locked_by_creator, ` + // NEW
       `profiles!${fkName}(username, role)`;
     return supabase
       .from('comments')
@@ -203,27 +205,60 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
     }
   }
 
-  // админ-действия
+  // ===== админ-действия (с «вето создателя») =====
+  function denyIfCreatorLock(c: CommentRow) {
+    if (me.role === 'admin' && c.admin_locked_by_creator) {
+      alert('Эти настройки закреплены создателем.');
+      return true;
+    }
+    return false;
+  }
+
   async function togglePin(id: number, pinned: boolean | null) {
     if (!isAdmin) return;
+    const c = items.find(i => i.id === id);
+    if (!c) return;
+    if (denyIfCreatorLock(c)) return;
+
     const q = await supabase.from('comments').update({ pinned: !pinned }).eq('id', id);
     if (q.error) return alert(prettyDbError(q.error.message));
     await loadAll(me.id);
   }
+
   async function toggleReplies(id: number, allow: boolean | null) {
     if (!isAdmin) return;
+    const c = items.find(i => i.id === id);
+    if (!c) return;
+    if (denyIfCreatorLock(c)) return;
+
     const q = await supabase.from('comments').update({ allow_replies: !allow }).eq('id', id);
     if (q.error) return alert(prettyDbError(q.error.message));
     await loadAll(me.id);
   }
+
   async function toggleDislikes(id: number, allow: boolean | null) {
     if (!isAdmin) return;
+    const c = items.find(i => i.id === id);
+    if (!c) return;
+    if (denyIfCreatorLock(c)) return;
+
     const q = await supabase.from('comments').update({ allow_dislikes: !allow }).eq('id', id);
     if (q.error) return alert(prettyDbError(q.error.message));
     await loadAll(me.id);
   }
+
   async function removeComment(id: number) {
     if (!isAdmin) return;
+    const c = items.find(i => i.id === id);
+    if (!c) return;
+
+    // админу нельзя удалять комментарии создателя (UI-сторожок; БД всё равно не даст)
+    const authorIsCreator = ((c.profiles?.role ?? 'user') as Role) === 'creator';
+    if (me.role === 'admin' && authorIsCreator) {
+      alert('Нельзя удалять комментарии создателя.');
+      return;
+    }
+
     if (!confirm('Удалить комментарий?')) return;
     const q = await supabase.from('comments').delete().eq('id', id);
     if (q.error) return alert(prettyDbError(q.error.message));
@@ -239,7 +274,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
         (map[i.parent_id] ||= []).push(i);
       }
     });
-    Object.values(map).forEach(list => list.sort((a, b) => a.created_at < b.created_at ? -1 : 1));
+    Object.values(map).forEach(list => list.sort((a, b) => (a.created_at < b.created_at ? -1 : 1)));
     return map;
   }, [items]);
 
@@ -263,6 +298,13 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
         border: '1px solid rgba(255,255,255,.2)',
         opacity: .9
       }}>{label}</span>
+    );
+  }
+
+  function creatorLockChip(locked?: boolean | null) {
+    if (!locked) return null;
+    return (
+      <span style={{marginLeft:8, fontSize:12, opacity:.85}}>🔒 от создателя</span>
     );
   }
 
@@ -291,6 +333,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
             const role = (c.profiles?.role ?? 'user') as Role;
             const st = statFor(c.id);
             const my = myVotes[c.id] ?? 0;
+            const lockedByCreator = !!c.admin_locked_by_creator;
 
             return (
               <div key={c.id}
@@ -304,6 +347,7 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
                     <strong>{name}</strong>
                     {badge(role)}
                     {c.pinned ? <span style={{marginLeft:8, fontSize:12, opacity:.8}}>📌 закреплён</span> : null}
+                    {creatorLockChip(lockedByCreator)}
                   </div>
                   <div style={{opacity:.6, fontSize:12}}>
                     {new Date(c.created_at).toLocaleString()}
@@ -340,16 +384,37 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
                   {/* админ-кнопки */}
                   {isAdmin && (
                     <>
-                      <button type="button" onClick={()=>togglePin(c.id, !!c.pinned)}>
+                      <button
+                        type="button"
+                        onClick={()=>togglePin(c.id, !!c.pinned)}
+                        disabled={me.role==='admin' && lockedByCreator}
+                        title={me.role==='admin' && lockedByCreator ? 'Заблокировано создателем' : undefined}
+                      >
                         {c.pinned ? 'Открепить' : 'Закрепить'}
                       </button>
-                      <button type="button" onClick={()=>toggleReplies(c.id, c.allow_replies !== false)}>
+                      <button
+                        type="button"
+                        onClick={()=>toggleReplies(c.id, c.allow_replies !== false)}
+                        disabled={me.role==='admin' && lockedByCreator}
+                        title={me.role==='admin' && lockedByCreator ? 'Заблокировано создателем' : undefined}
+                      >
                         Ответы: {c.allow_replies === false ? 'выкл' : 'вкл'}
                       </button>
-                      <button type="button" onClick={()=>toggleDislikes(c.id, c.allow_dislikes !== false)}>
+                      <button
+                        type="button"
+                        onClick={()=>toggleDislikes(c.id, c.allow_dislikes !== false)}
+                        disabled={me.role==='admin' && lockedByCreator}
+                        title={me.role==='admin' && lockedByCreator ? 'Заблокировано создателем' : undefined}
+                      >
                         Дизлайки: {c.allow_dislikes === false ? 'выкл' : 'вкл'}
                       </button>
-                      <button type="button" onClick={()=>removeComment(c.id)} style={{color:'#f88'}}>
+                      <button
+                        type="button"
+                        onClick={()=>removeComment(c.id)}
+                        style={{color:'#f88'}}
+                        disabled={me.role==='admin' && role==='creator'}
+                        title={me.role==='admin' && role==='creator' ? 'Нельзя удалять комментарии создателя' : undefined}
+                      >
                         Удалить
                       </button>
                     </>
@@ -376,13 +441,18 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
                   const rrole = (r.profiles?.role ?? 'user') as Role;
                   const rst = statFor(r.id);
                   const rmy = myVotes[r.id] ?? 0;
+                  const rLocked = !!r.admin_locked_by_creator;
+
                   return (
                     <div key={r.id} style={{
                       marginTop:10, marginLeft:14, padding:10,
                       borderLeft:'2px solid rgba(255,255,255,.15)', borderRadius:8
                     }}>
                       <div style={{display:'flex', justifyContent:'space-between', marginBottom:6}}>
-                        <div><strong>{rname}</strong>{badge(rrole)}</div>
+                        <div>
+                          <strong>{rname}</strong>{badge(rrole)}
+                          {creatorLockChip(rLocked)}
+                        </div>
                         <div style={{opacity:.6, fontSize:12}}>{new Date(r.created_at).toLocaleString()}</div>
                       </div>
                       <div style={{marginBottom:8}}>{r.content}</div>
@@ -398,7 +468,13 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
                         </button>
                         {isAdmin && (
                           <>
-                            <button type="button" onClick={()=>removeComment(r.id)} style={{color:'#f88'}}>
+                            <button
+                              type="button"
+                              onClick={()=>removeComment(r.id)}
+                              style={{color:'#f88'}}
+                              disabled={me.role==='admin' && rrole==='creator'}
+                              title={me.role==='admin' && rrole==='creator' ? 'Нельзя удалять комментарии создателя' : undefined}
+                            >
                               Удалить
                             </button>
                           </>
@@ -420,6 +496,8 @@ export default function Comments({ slug = 'feedback' }: { slug?: string }) {
 function prettyDbError(msg: string) {
   if (/5 minutes|5 minute|5мин/i.test(msg)) return 'Можно оставлять 1 комментарий раз в 5 минут.';
   if (/Only admin\/creator/i.test(msg)) return 'Только создатель/админ могут менять эти флаги.';
-  if (/Username can be set only once/i.test(msg)) return 'Ник можно задать только один раз.';
+  if (/Locked by creator/i.test(msg)) return 'Эти настройки закреплены создателем.';
+  if (/row-level security/i.test(msg)) return 'Недостаточно прав для этого действия.';
+  if (/violates not-null/i.test(msg)) return 'Обязательное поле не заполнено.';
   return msg;
 }
