@@ -23,7 +23,7 @@
     p.lead{
       margin:0 0 18px;
       color:var(--muted);
-      white-space:nowrap;            /* держим тег и ссылку в одну линию */
+      white-space:nowrap; /* держим тег и ссылку в одну линию */
     }
 
     /* ссылка на RoyaleAPI рядом с тегом */
@@ -63,6 +63,15 @@
       transition:background .12s ease, transform .12s ease;
     }
     .btn:hover{background:rgba(255,255,255,.12);transform:translateY(-1px)}
+
+    /* блок описания */
+    .idol-info{
+      margin-top:28px;
+      font-size:16px;
+      line-height:1.7;
+      color:var(--muted);
+    }
+    .idol-info strong{color:var(--fg)}
   </style>
 </head>
 <body>
@@ -73,7 +82,7 @@
   </header>
 
   <main class="container">
-    <h1>Кумир</h1>
+    <h1>Кумир Создателя</h1>
 
     <p class="lead">
       Faith #CUQGPCJR0
@@ -124,6 +133,17 @@
         </div>
       </a>
     </div>
+
+    <!-- блок с описанием кумира -->
+    <div class="idol-info">
+      <p>
+        <strong>Мамоян</strong> - один из сильнейших игроков не только СНГ, но и всего мира.<br>
+        Лучший киберспортивный стример в русскоязычном сообществе.<br>
+        Регулярно занимает топовые позиции по итогам сезонов и принимает участие в <strong>Clash Royale League (CRL)</strong>.<br>
+        Вдохновляет тысячи игроков своим стилем игры и дружелюбной атмосферой на стримах.
+      </p>
+    </div>
+
   </main>
 </body>
 </html>
