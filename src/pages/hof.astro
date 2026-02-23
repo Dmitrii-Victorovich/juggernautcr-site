@@ -127,8 +127,6 @@
 
     <div id="grid" class="grid"></div>
 
-    <div id="empty" class="empty" hidden>Пока пусто. Скоро тут будут ваши лучшие победы!</div>
-
     <div class="more-wrap">
       <button id="moreBtn" class="btn" type="button">Показать ещё</button>
     </div>
@@ -345,7 +343,6 @@
         render(true);
       } catch(err){
         console.error(err);
-        statsEl.textContent = 'Ошибка загрузки данных. Проверь /public/data/hof.json';
         emptyEl.hidden = false;
         moreBtn.style.display = 'none';
       }
