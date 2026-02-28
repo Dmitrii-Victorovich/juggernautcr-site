@@ -15,26 +15,23 @@ function slugify(s = "") {
     .replace(/^-|-$/g, "");
 }
 
-function readHofJsonSafe() {
+export async function getStaticPaths() {
+  // читаем JSON безопасно прямо здесь (без внешних функций)
+  let items = [];
   try {
     const filePath = path.join(process.cwd(), "public", "data", "hof.json");
-    if (!fs.existsSync(filePath)) return [];
-    const raw = fs.readFileSync(filePath, "utf-8");
-    const data = JSON.parse(raw);
-    const items = Array.isArray(data) ? data : [];
-    return items.filter((x) => x && x.src && x.player);
-  } catch (e) {
-    // если JSON битый — не валим билд, просто пусто
-    return [];
+    if (fs.existsSync(filePath)) {
+      const raw = fs.readFileSync(filePath, "utf-8");
+      const data = JSON.parse(raw);
+      const arr = Array.isArray(data) ? data : [];
+      items = arr.filter((x) => x && x.src && x.player);
+    }
+  } catch {
+    items = [];
   }
-}
-
-export async function getStaticPaths() {
-  const items = readHofJsonSafe();
 
   const slugs = Array.from(new Set(items.map((x) => slugify(x.player)))).filter(Boolean);
 
-  // если данных пока нет — НЕ валим билд: просто не создаём страницы игроков
   return slugs.map((player) => {
     const playerItems = items.filter((x) => slugify(x.player) === player);
     const playerName = playerItems[0]?.player ?? player;
@@ -285,7 +282,7 @@ const years = uniqueYears(items);
       }
 
       page++;
-      moreBtn.style.display = (start + slice.length >= all.length) ? 'none' : '';
+      moreBtn.style.display = (start + slice.length >= ITEMS.length) ? 'none' : '';
     }
 
     function openLightbox(item){
