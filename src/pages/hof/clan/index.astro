@@ -1,0 +1,153 @@
+---
+---
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Клан — Зал славы</title>
+  <style>
+    :root{
+      --bg:#0f1320; --fg:#e9eef7; --muted:#a8b0c3;
+      --card:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      --stroke:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,Cantarell,Arial,sans-serif}
+    .wrap{max-width:980px;margin:0 auto;padding:20px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    h1{margin:8px 0 6px;font-size:clamp(24px,6vw,36px);line-height:1.1}
+    .sub{color:var(--muted);margin:0 0 12px;max-width:70ch;line-height:1.5}
+    .btn{
+      display:inline-block;padding:10px 14px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06);
+      color:var(--fg); text-decoration:none; transition:.12s ease; white-space:nowrap;
+      cursor:pointer;
+    }
+    .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.12)}
+    .feed{display:flex; flex-direction:column; gap:12px; margin-top:12px}
+    .post{
+      border:1px solid var(--stroke); border-radius:16px; overflow:hidden;
+      background:var(--card);
+    }
+    .img{width:100%; display:block; aspect-ratio:16/9; object-fit:cover; background:#000}
+    .body{padding:12px 14px}
+    .date{color:var(--muted); font-size:13px; margin-top:6px}
+    .empty{opacity:.8;color:var(--muted);text-align:center;margin:26px 0}
+    dialog#lightbox{border:none; padding:0; background:transparent; width:100%;}
+    dialog#lightbox::backdrop{background:rgba(0,0,0,.6)}
+    .lightbox-inner{
+      max-width:min(96vw,1100px); margin:4vh auto; background:#0c1120;
+      border:1px solid var(--stroke); border-radius:14px; overflow:hidden;
+    }
+    .lightbox-media{background:#000}
+    .lightbox-media img{display:block;max-height:80vh; width:100%; object-fit:contain}
+    .lightbox-meta{padding:12px 14px; display:flex; gap:10px; flex-wrap:wrap; align-items:center; justify-content:flex-end}
+    .lightbox-meta .left{margin-right:auto; color:var(--muted); display:flex; gap:10px; flex-wrap:wrap; align-items:center}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Клан</h1>
+        <div class="sub">Ностальгия Juggernaut: лента постов как в Telegram — картинка, подпись и дата.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="/hof">Назад</a>
+        <a class="btn" href="/">На главную</a>
+      </div>
+    </header>
+
+    <div id="feed" class="feed"></div>
+    <div id="empty" class="empty" hidden>Пока пусто. Добавь записи в <b>/public/data/clan.json</b>.</div>
+  </div>
+
+  <dialog id="lightbox">
+    <div class="lightbox-inner">
+      <div class="lightbox-media"><img id="lbImg" alt=""></div>
+      <div class="lightbox-meta">
+        <div class="left">
+          <span id="lbText"></span>
+          <span id="lbDate"></span>
+        </div>
+        <a id="lbOpen" class="btn" href="#" target="_blank" rel="noopener">Открыть</a>
+        <a id="lbDownload" class="btn" href="#" download>Скачать</a>
+        <button class="btn" type="button" onclick="document.getElementById('lightbox').close()">Закрыть</button>
+      </div>
+    </div>
+  </dialog>
+
+  <script>
+    const feed = document.getElementById('feed');
+    const emptyEl = document.getElementById('empty');
+
+    function openLightbox(item){
+      const dlg = document.getElementById('lightbox');
+      document.getElementById('lbImg').src = item.src || '';
+      document.getElementById('lbText').textContent = item.text ? item.text : '';
+      document.getElementById('lbDate').textContent = item.date ? `• ${item.date}` : '';
+      const src = item.src || '#';
+      document.getElementById('lbOpen').href = src;
+      document.getElementById('lbDownload').href = src;
+      dlg.showModal();
+    }
+
+    document.getElementById('lightbox').addEventListener('click', e=>{
+      const dlg = e.currentTarget;
+      const rect = dlg.querySelector('.lightbox-inner').getBoundingClientRect();
+      const inDialog =
+        e.clientX >= rect.left && e.clientX <= rect.right &&
+        e.clientY >= rect.top  && e.clientY <= rect.bottom;
+      if(!inDialog) dlg.close();
+    });
+
+    async function init(){
+      try{
+        const res = await fetch('/data/clan.json', { cache:'no-store' });
+        const data = await res.json();
+        const items = Array.isArray(data) ? data.filter(x => x && x.src) : [];
+
+        if(items.length === 0){
+          emptyEl.hidden = false;
+          return;
+        }
+
+        // новые сверху (по date)
+        items.sort((a,b)=> (b.date||"").localeCompare(a.date||""));
+
+        for(const item of items){
+          const post = document.createElement('div');
+          post.className = 'post';
+
+          const img = document.createElement('img');
+          img.className = 'img';
+          img.loading = 'lazy';
+          img.src = item.thumb || item.src;
+          img.alt = item.text || 'Пост клана';
+          img.style.cursor = 'pointer';
+          img.addEventListener('click', ()=>openLightbox(item));
+
+          const body = document.createElement('div');
+          body.className = 'body';
+          body.textContent = item.text || '';
+
+          const date = document.createElement('div');
+          date.className = 'date';
+          date.textContent = item.date || '';
+
+          post.append(img, body, date);
+          feed.append(post);
+        }
+      } catch(e){
+        console.error(e);
+        emptyEl.hidden = false;
+        emptyEl.textContent = 'Ошибка загрузки /data/clan.json';
+      }
+    }
+    init();
+  </script>
+</body>
+</html>
