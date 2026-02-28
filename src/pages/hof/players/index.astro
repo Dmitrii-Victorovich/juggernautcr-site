@@ -1,0 +1,176 @@
+---
+---
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Игроки — Зал славы</title>
+  <style>
+    :root{
+      --bg:#0f1320; --fg:#e9eef7; --muted:#a8b0c3;
+      --card:linear-gradient(180deg,rgba(255,255,255,.06),rgba(255,255,255,.03));
+      --stroke:rgba(255,255,255,.10);
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--fg);
+      font-family:system-ui,-apple-system,"Segoe UI",Roboto,Ubuntu,Cantarell,Arial,sans-serif}
+    .wrap{max-width:980px;margin:0 auto;padding:20px}
+    header{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    h1{margin:8px 0 10px;font-size:clamp(24px,6vw,36px);line-height:1.1}
+    .btn{
+      display:inline-block;padding:10px 14px;border-radius:999px;
+      border:1px solid rgba(255,255,255,.2); background:rgba(255,255,255,.06);
+      color:var(--fg); text-decoration:none; transition:.12s ease; white-space:nowrap;
+      cursor:pointer;
+    }
+    .btn:hover{transform:translateY(-1px); background:rgba(255,255,255,.12)}
+    .row{display:flex;gap:10px;flex-wrap:wrap;align-items:center;margin:10px 0 12px}
+    input{
+      background:rgba(255,255,255,.06); border:1px solid var(--stroke);
+      color:var(--fg); border-radius:10px; padding:9px 10px; outline:none; min-width:260px;
+    }
+    input:focus{border-color:rgba(255,255,255,.22)}
+    .hint{color:var(--muted);font-size:13px;margin-top:4px}
+
+    .grid{
+      display:grid; gap:12px; margin-top:12px;
+      grid-template-columns:repeat(auto-fill,minmax(220px,1fr));
+    }
+    .player{
+      display:flex; align-items:center; gap:12px;
+      border:1px solid var(--stroke); border-radius:14px;
+      background:var(--card); padding:12px;
+      text-decoration:none; color:inherit;
+      transition:transform .1s ease, box-shadow .12s ease;
+    }
+    .player:hover{transform:translateY(-2px); box-shadow:0 10px 26px rgba(0,0,0,.28)}
+    .badge{
+      width:42px; height:42px; border-radius:12px;
+      border:1px solid var(--stroke);
+      display:grid; place-items:center;
+      background:rgba(255,255,255,.06);
+      font-weight:800;
+      letter-spacing:.5px;
+    }
+    .name{font-weight:700}
+    .meta{color:var(--muted);font-size:13px;margin-top:2px}
+    .empty{opacity:.8;color:var(--muted);text-align:center;margin:26px 0}
+  </style>
+</head>
+
+<body>
+  <div class="wrap">
+    <header>
+      <div>
+        <h1>Игроки</h1>
+        <div class="hint">Выбери бойца — откроется его личная галерея побед.</div>
+      </div>
+      <div style="display:flex;gap:10px;flex-wrap:wrap">
+        <a class="btn" href="/hof">Назад</a>
+        <a class="btn" href="/">На главную</a>
+      </div>
+    </header>
+
+    <div class="row">
+      <label style="display:flex;align-items:center;gap:8px">
+        <span style="opacity:.8">Поиск:</span>
+        <input id="q" placeholder="введи ник..." />
+      </label>
+      <div class="hint" id="stats"></div>
+    </div>
+
+    <div id="grid" class="grid"></div>
+    <div id="empty" class="empty" hidden>Пока нет игроков. Добавь записи в <b>/public/data/hof.json</b>.</div>
+  </div>
+
+  <script>
+    const grid = document.getElementById('grid');
+    const emptyEl = document.getElementById('empty');
+    const qInput = document.getElementById('q');
+    const statsEl = document.getElementById('stats');
+
+    let PLAYERS = [];
+    let q = '';
+
+    function norm(s){ return (s||"").toLowerCase().trim(); }
+    function slugify(s){
+      return norm(s)
+        .replace(/ё/g,'е')
+        .replace(/[^a-z0-9а-я_-]+/g,'-')
+        .replace(/-+/g,'-')
+        .replace(/^-|-$/g,'');
+    }
+    function initials(name){
+      const n = (name||"").trim();
+      if(!n) return "JG";
+      // берем первые 2 “значимых” символа
+      const clean = n.replace(/[^a-z0-9а-я]/gi,'');
+      return (clean.slice(0,2) || n.slice(0,2)).toUpperCase();
+    }
+    function uniquePlayers(items){
+      const map = new Map(); // name -> count
+      for(const it of items){
+        const p = (it.player||"").trim();
+        if(!p) continue;
+        map.set(p, (map.get(p)||0)+1);
+      }
+      const arr = Array.from(map.entries()).map(([name,count])=>({name,count,slug:slugify(name)}));
+      arr.sort((a,b)=>a.name.localeCompare(b.name,'ru'));
+      return arr;
+    }
+
+    function render(){
+      const list = PLAYERS.filter(p => !q || norm(p.name).includes(norm(q)));
+      statsEl.textContent = PLAYERS.length ? `Игроков: ${PLAYERS.length} • Показано: ${list.length}` : '';
+      grid.innerHTML = '';
+
+      if(PLAYERS.length === 0){
+        emptyEl.hidden = false;
+        return;
+      }
+      emptyEl.hidden = list.length !== 0;
+
+      for(const p of list){
+        const a = document.createElement('a');
+        a.className = 'player';
+        a.href = `/hof/players/${encodeURIComponent(p.slug)}`;
+
+        const b = document.createElement('div');
+        b.className = 'badge';
+        b.textContent = initials(p.name);
+
+        const col = document.createElement('div');
+        const name = document.createElement('div');
+        name.className = 'name';
+        name.textContent = p.name;
+
+        const meta = document.createElement('div');
+        meta.className = 'meta';
+        meta.textContent = `Побед: ${p.count}`;
+
+        col.append(name, meta);
+        a.append(b, col);
+        grid.append(a);
+      }
+    }
+
+    async function init(){
+      try{
+        const res = await fetch('/data/hof.json', { cache: 'no-store' });
+        const data = await res.json();
+        const items = Array.isArray(data) ? data.filter(x => x && x.src) : [];
+        PLAYERS = uniquePlayers(items);
+        render();
+      } catch(e){
+        console.error(e);
+        emptyEl.hidden = false;
+        emptyEl.textContent = 'Ошибка загрузки /data/hof.json';
+      }
+    }
+
+    qInput.addEventListener('input', e => { q = e.target.value; render(); });
+    init();
+  </script>
+</body>
+</html>
