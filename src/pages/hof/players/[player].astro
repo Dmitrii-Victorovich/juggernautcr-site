@@ -1,11 +1,62 @@
 ---
+export const prerender = true;
+
+// ВАЖНО: читаем JSON на этапе сборки (не fetch в браузере)
+import fs from "node:fs";
+import path from "node:path";
+
+function norm(s = "") {
+  return String(s).toLowerCase().trim();
+}
+function slugify(s = "") {
+  return norm(s)
+    .replace(/ё/g, "е")
+    .replace(/[^a-z0-9а-я_-]+/g, "-")
+    .replace(/-+/g, "-")
+    .replace(/^-|-$/g, "");
+}
+
+function readHofJson() {
+  // public/data/hof.json -> абсолютный путь от корня проекта
+  const filePath = path.join(process.cwd(), "public", "data", "hof.json");
+  const raw = fs.readFileSync(filePath, "utf-8");
+  const data = JSON.parse(raw);
+  const items = Array.isArray(data) ? data : [];
+  return items.filter((x) => x && x.src && x.player);
+}
+
+export async function getStaticPaths() {
+  const items = readHofJson();
+
+  // уникальные playerSlug
+  const slugs = Array.from(new Set(items.map((x) => slugify(x.player)))).filter(Boolean);
+
+  return slugs.map((player) => {
+    const playerItems = items.filter((x) => slugify(x.player) === player);
+    const playerName = playerItems[0]?.player ?? player;
+
+    return {
+      params: { player },
+      props: { player, playerName, items: playerItems },
+    };
+  });
+}
+
+const { playerName, items } = Astro.props;
+
+function uniqueYears(list) {
+  const set = new Set(list.map((i) => (i.date || "").slice(0, 4)).filter(Boolean));
+  return Array.from(set).sort((a, b) => b.localeCompare(a));
+}
+const years = uniqueYears(items);
 ---
+
 <!doctype html>
 <html lang="ru">
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Победы игрока — Зал славы</title>
+  <title>{playerName} — Победы — Зал славы</title>
 
   <style>
     :root{
@@ -87,7 +138,7 @@
   <div class="wrap">
     <header>
       <div>
-        <h1 id="title">Игрок</h1>
+        <h1>{playerName}</h1>
         <div class="sub">Все победы этого игрока из Зала славы.</div>
         <div class="hint" id="stats"></div>
       </div>
@@ -102,6 +153,7 @@
         <span style="opacity:.8;margin-right:6px">Год:</span>
         <select id="yearFilter">
           <option value="all">Все</option>
+          {years.map(y => <option value={y}>{y}</option>)}
         </select>
       </label>
 
@@ -143,7 +195,7 @@
     </div>
   </dialog>
 
-  <script>
+  <script define:vars={{ ITEMS: items, PLAYER: playerName }}>
     const grid = document.getElementById('grid');
     const moreBtn = document.getElementById('moreBtn');
     const emptyEl = document.getElementById('empty');
@@ -151,9 +203,7 @@
     const sortBtn = document.getElementById('sortBtn');
     const qInput = document.getElementById('q');
     const statsEl = document.getElementById('stats');
-    const titleEl = document.getElementById('title');
 
-    let ITEMS = [];
     let page = 0;
     const PAGE_SIZE = 12;
     let sortDesc = true;
@@ -161,20 +211,6 @@
     let q = '';
 
     function norm(s){ return (s||"").toLowerCase().trim(); }
-    function slugify(s){
-      return norm(s)
-        .replace(/ё/g,'е')
-        .replace(/[^a-z0-9а-я_-]+/g,'-')
-        .replace(/-+/g,'-')
-        .replace(/^-|-$/g,'');
-    }
-    function uniqueYears(items){
-      const set = new Set(items.map(i => (i.date||"").slice(0,4)).filter(Boolean));
-      return Array.from(set).sort((a,b)=>b.localeCompare(a));
-    }
-
-    const playerSlug = decodeURIComponent(location.pathname.split('/').pop() || '');
-    let playerName = '';
 
     function applyFilters(){
       let arr = [...ITEMS];
@@ -197,7 +233,7 @@
     }
 
     function setStats(total, filtered){
-      statsEl.textContent = total ? `Побед: ${total} • По фильтрам: ${filtered}` : '';
+      statsEl.textContent = total ? `Игрок: ${PLAYER} • Побед: ${total} • По фильтрам: ${filtered}` : '';
     }
 
     function render(reset=false){
@@ -274,47 +310,16 @@
       if(!inDialog) dlg.close();
     });
 
-    async function init(){
-      try{
-        const res = await fetch('/data/hof.json', { cache: 'no-store' });
-        if(!res.ok) throw new Error('Не удалось загрузить /data/hof.json');
-        const data = await res.json();
+    yearSelect.addEventListener('change', e => { currentYear = e.target.value; render(true); });
+    sortBtn.addEventListener('click', ()=>{
+      sortDesc = !sortDesc;
+      sortBtn.textContent = sortDesc ? "Сначала новые" : "Сначала старые";
+      render(true);
+    });
+    moreBtn.addEventListener('click', ()=> render(false));
+    qInput.addEventListener('input', e => { q = e.target.value; render(true); });
 
-        const all = Array.isArray(data) ? data.filter(x => x && x.src && x.player) : [];
-        const items = all.filter(x => slugify(x.player) === playerSlug);
-
-        // имя игрока (как написано в данных)
-        playerName = items[0]?.player || playerSlug;
-        titleEl.textContent = playerName;
-
-        ITEMS = items;
-
-        // годы
-        for(const y of uniqueYears(ITEMS)){
-          const o = document.createElement('option');
-          o.value = o.textContent = y;
-          yearSelect.appendChild(o);
-        }
-
-        yearSelect.addEventListener('change', e => { currentYear = e.target.value; render(true); });
-        sortBtn.addEventListener('click', ()=>{
-          sortDesc = !sortDesc;
-          sortBtn.textContent = sortDesc ? "Сначала новые" : "Сначала старые";
-          render(true);
-        });
-        moreBtn.addEventListener('click', ()=> render(false));
-        qInput.addEventListener('input', e => { q = e.target.value; render(true); });
-
-        render(true);
-      } catch(err){
-        console.error(err);
-        emptyEl.hidden = false;
-        emptyEl.textContent = 'Ошибка загрузки данных.';
-        moreBtn.style.display = 'none';
-      }
-    }
-
-    init();
+    render(true);
   </script>
 </body>
 </html>
