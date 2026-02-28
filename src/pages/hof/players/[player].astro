@@ -4,19 +4,8 @@ export const prerender = true;
 import fs from "node:fs";
 import path from "node:path";
 
-function norm(s = "") {
-  return String(s).toLowerCase().trim();
-}
-function slugify(s = "") {
-  return norm(s)
-    .replace(/ё/g, "е")
-    .replace(/[^a-z0-9а-я_-]+/g, "-")
-    .replace(/-+/g, "-")
-    .replace(/^-|-$/g, "");
-}
-
 export async function getStaticPaths() {
-  // читаем JSON безопасно прямо здесь (без внешних функций)
+  // 1) читаем JSON безопасно
   let items = [];
   try {
     const filePath = path.join(process.cwd(), "public", "data", "hof.json");
@@ -30,8 +19,18 @@ export async function getStaticPaths() {
     items = [];
   }
 
+  // 2) slugify прямо внутри getStaticPaths (никаких внешних ссылок)
+  const norm = (s = "") => String(s).toLowerCase().trim();
+  const slugify = (s = "") =>
+    norm(s)
+      .replace(/ё/g, "е")
+      .replace(/[^a-z0-9а-я_-]+/g, "-")
+      .replace(/-+/g, "-")
+      .replace(/^-|-$/g, "");
+
   const slugs = Array.from(new Set(items.map((x) => slugify(x.player)))).filter(Boolean);
 
+  // 3) если данных нет — просто не генерим страницы (билд не падает)
   return slugs.map((player) => {
     const playerItems = items.filter((x) => slugify(x.player) === player);
     const playerName = playerItems[0]?.player ?? player;
@@ -45,6 +44,7 @@ export async function getStaticPaths() {
 
 const { playerName = "Игрок", items = [] } = Astro.props;
 
+// годы для селекта
 function uniqueYears(list) {
   const set = new Set(list.map((i) => (i.date || "").slice(0, 4)).filter(Boolean));
   return Array.from(set).sort((a, b) => b.localeCompare(a));
